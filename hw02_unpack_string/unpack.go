@@ -64,7 +64,6 @@ func Unpack(input string) (string, error) {
 		default:
 			return "", ErrInvalidString
 		}
-
 	}
 
 	if escapingDetected {
