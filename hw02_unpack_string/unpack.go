@@ -2,11 +2,77 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"strconv"
+	"strings"
+	"unicode"
 )
 
-var ErrInvalidString = errors.New("invalid string")
+var (
+	ErrInvalidString       = errors.New("invalid string")
+	ErrUnusedEscaping      = errors.New("unused escaping")
+	ErrInvalidEscaping     = errors.New("invalid escaping")
+	ErrLetterExpected      = errors.New("letter expected")
+	ErrConvertingToNumeric = errors.New("invalid converting to numeric")
+)
 
-func Unpack(_ string) (string, error) {
+func Unpack(input string) (string, error) {
 	// Place your code here.
-	return "", nil
+
+	if len(input) == 0 {
+		return "", nil
+	}
+
+	var sb strings.Builder
+	var unpackedRune rune
+
+	startUnpackRune := true
+	escapingDetected := false
+
+	for _, rune := range input {
+		switch {
+		case escapingDetected:
+			if unicode.IsLetter(rune) || string(rune) == "\n" {
+				return "", ErrInvalidEscaping
+			}
+			unpackedRune = rune
+			escapingDetected = false
+		case !escapingDetected && string(rune) == `\`:
+			escapingDetected = true
+			if unpackedRune != 0 {
+				sb.WriteRune(unpackedRune)
+			}
+			unpackedRune = 0
+			startUnpackRune = false
+		case startUnpackRune:
+			if !(unicode.IsLetter(rune) || string(rune) == "\n") {
+				return "", ErrLetterExpected
+			}
+			unpackedRune = rune
+			startUnpackRune = false
+		case !startUnpackRune && string(rune) == "0":
+			startUnpackRune = true
+		case !startUnpackRune && unicode.IsDigit(rune):
+			digit, err := strconv.Atoi(string(rune))
+			if err != nil {
+				return "", ErrConvertingToNumeric
+			}
+			sb.WriteString(strings.Repeat(string(unpackedRune), digit))
+			startUnpackRune = true
+		case !startUnpackRune && (unicode.IsLetter(rune) || string(rune) == "\n"):
+			sb.WriteRune(unpackedRune)
+			unpackedRune = rune
+		default:
+			return "", ErrInvalidString
+		}
+
+	}
+
+	if escapingDetected {
+		return "", ErrUnusedEscaping
+	}
+
+	if !startUnpackRune {
+		sb.WriteRune(unpackedRune)
+	}
+	return sb.String(), nil
 }
