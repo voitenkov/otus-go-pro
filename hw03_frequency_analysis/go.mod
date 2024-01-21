@@ -1,6 +1,6 @@
-module github.com/fixme_my_friend/hw03_frequency_analysis
+module github.com/voitenkov/otus-go-pro/hw03_frequency_analysis
 
-go 1.19
+go 1.20
 
 require github.com/stretchr/testify v1.7.0
 
