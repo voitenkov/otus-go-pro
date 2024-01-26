@@ -22,6 +22,10 @@ func TestUnpack(t *testing.T) {
 		{input: `qwe\45`, expected: `qwe44444`},
 		{input: `qwe\\5`, expected: `qwe\\\\\`},
 		{input: `qwe\\\3`, expected: `qwe\3`},
+		{input: "สวัสดี", expected: "สวัสดี"},
+		{input: "สวัส4ดี", expected: "สวัสสสสดี"},
+		{input: "🙃0", expected: ""},
+		{input: "🙂9", expected: "🙂🙂🙂🙂🙂🙂🙂🙂🙂"},
 	}
 
 	for _, tc := range tests {
@@ -40,7 +44,7 @@ func TestUnpackLetterExpected(t *testing.T) {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
-			require.Truef(t, errors.Is(err, ErrLetterExpected), "actual error %q", err)
+			require.Truef(t, errors.Is(err, ErrDigitIsNotExpected), "actual error %q", err)
 		})
 	}
 }
@@ -63,17 +67,6 @@ func TestUnpackInvalidEscaping(t *testing.T) {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
 			require.Truef(t, errors.Is(err, ErrInvalidEscaping), "actual error %q", err)
-		})
-	}
-}
-
-func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"a3bc%", "ab$c"}
-	for _, tc := range invalidStrings {
-		tc := tc
-		t.Run(tc, func(t *testing.T) {
-			_, err := Unpack(tc)
-			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
 		})
 	}
 }

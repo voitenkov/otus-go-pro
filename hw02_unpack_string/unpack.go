@@ -11,7 +11,7 @@ var (
 	ErrInvalidString       = errors.New("invalid string")
 	ErrUnusedEscaping      = errors.New("unused escaping")
 	ErrInvalidEscaping     = errors.New("invalid escaping")
-	ErrLetterExpected      = errors.New("letter expected")
+	ErrDigitIsNotExpected  = errors.New("digit is not expected")
 	ErrConvertingToNumeric = errors.New("invalid converting to numeric")
 )
 
@@ -31,7 +31,7 @@ func Unpack(input string) (string, error) {
 	for _, rune := range input {
 		switch {
 		case escapingDetected:
-			if unicode.IsLetter(rune) || string(rune) == "\n" {
+			if !(unicode.IsDigit(rune) || string(rune) == `\`) {
 				return "", ErrInvalidEscaping
 			}
 			unpackedRune = rune
@@ -44,8 +44,8 @@ func Unpack(input string) (string, error) {
 			unpackedRune = 0
 			startUnpackRune = false
 		case startUnpackRune:
-			if !(unicode.IsLetter(rune) || string(rune) == "\n") {
-				return "", ErrLetterExpected
+			if unicode.IsDigit(rune) {
+				return "", ErrDigitIsNotExpected
 			}
 			unpackedRune = rune
 			startUnpackRune = false
@@ -58,7 +58,7 @@ func Unpack(input string) (string, error) {
 			}
 			sb.WriteString(strings.Repeat(string(unpackedRune), digit))
 			startUnpackRune = true
-		case !startUnpackRune && (unicode.IsLetter(rune) || string(rune) == "\n"):
+		case !startUnpackRune && !unicode.IsDigit(rune):
 			sb.WriteRune(unpackedRune)
 			unpackedRune = rune
 		default:
