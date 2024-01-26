@@ -1,3 +1,5 @@
-go 1.20
+go 1.21
 
 use ./hw01_hello_otus
+use ./hw02_unpack_string
+use ./hw03_frequency_analysis
