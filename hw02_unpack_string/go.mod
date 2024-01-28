@@ -1,4 +1,4 @@
-module github.com/voitenkov/otus-go-pro
+module github.com/voitenkov/otus-go-pro/hw02_unpack_string
 
 go 1.21
 
