@@ -27,3 +27,4 @@ Thumbs.db
 .vscode/
 *.bak
 go.work
+go.work.sum
