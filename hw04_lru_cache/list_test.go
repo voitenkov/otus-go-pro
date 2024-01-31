@@ -51,5 +51,6 @@ func TestList(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			l.PushFront(i)
 		}
+		require.Equal(t, 10, l.Len())
 	})
 }
