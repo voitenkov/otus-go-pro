@@ -53,10 +53,12 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 }
 
 func (c *lruCache) Clear() {
-	for _, v := range c.items {
+	for k, v := range c.items {
 		c.queue.Remove(v)
+		delete(c.items, k)
 	}
-	clear(c.items)
+	// new builtin function for maps since Go 1.21
+	// clear(c.items)
 }
 
 func (c *lruCache) Len() int {
