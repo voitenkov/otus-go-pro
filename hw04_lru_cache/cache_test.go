@@ -96,24 +96,19 @@ func TestCache(t *testing.T) {
 func TestCacheMultithreading(t *testing.T) {
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
-	mu := sync.RWMutex{}
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000_000; i++ {
-			mu.Lock()
 			c.Set(Key(strconv.Itoa(i)), i)
-			mu.Unlock()
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000_000; i++ {
-			mu.RLock()
 			c.Get(Key(strconv.Itoa(rand.Intn(1_000_000))))
-			mu.RUnlock()
 		}
 	}()
 
@@ -124,24 +119,19 @@ func TestCacheMultithreading(t *testing.T) {
 func TestCacheMultithreadingWithLenAndClear(t *testing.T) {
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
-	mu := sync.RWMutex{}
 	wg.Add(10)
 
 	for i := 0; i < 10; i++ {
 		if i%2 == 0 {
 			go func(i int) {
 				defer wg.Done()
-				mu.Lock()
 				c.Set(Key(strconv.Itoa(i)), i)
-				mu.Unlock()
 				fmt.Println(i)
 			}(i)
 		} else {
 			go func(i int) {
 				defer wg.Done()
-				mu.RLock()
 				c.Get(Key(strconv.Itoa(rand.Intn(9))))
-				mu.RUnlock()
 				fmt.Println(i)
 			}(i)
 		}

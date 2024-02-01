@@ -1,5 +1,7 @@
 package hw04lrucache
 
+import "sync"
+
 type Key string
 
 type Cache interface {
@@ -10,12 +12,18 @@ type Cache interface {
 }
 
 type lruCache struct {
+	sync.RWMutex
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
 }
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
+	if c == nil {
+		panic("cache is not initialized")
+	}
+	c.Lock()
+	defer c.Unlock()
 	_, ok := c.items[key]
 	var li *ListItem
 	keyFound := false
@@ -39,6 +47,11 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {
+	if c == nil {
+		panic("cache is not initialized")
+	}
+	c.RLock()
+	defer c.RUnlock()
 	_, ok := c.items[key]
 	var li *ListItem
 	var value any
@@ -53,10 +66,17 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 }
 
 func (c *lruCache) Clear() {
+	if c == nil {
+		panic("cache is not initialized")
+	}
+	c.Lock()
+	defer c.Unlock()
+
 	for k, v := range c.items {
 		c.queue.Remove(v)
 		delete(c.items, k)
 	}
+
 	// new builtin function for maps since Go 1.21
 	// clear(c.items)
 }
