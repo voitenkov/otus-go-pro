@@ -1,5 +1,7 @@
 package hw04lrucache
 
+import "sync"
+
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -17,6 +19,7 @@ type ListItem struct {
 }
 
 type list struct {
+	sync.RWMutex
 	len   int
 	front *ListItem
 	back  *ListItem
@@ -35,6 +38,11 @@ func (l *list) Back() *ListItem {
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
+	if l == nil {
+		panic("list is not initialized")
+	}
+	l.Lock()
+	defer l.Unlock()
 	li := &ListItem{Value: v, Prev: nil, Next: l.front}
 	if l.front != nil {
 		l.front.Prev = li
@@ -48,6 +56,11 @@ func (l *list) PushFront(v interface{}) *ListItem {
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
+	if l == nil {
+		panic("list is not initialized")
+	}
+	l.Lock()
+	defer l.Unlock()
 	li := &ListItem{Value: v, Prev: l.back, Next: nil}
 	if l.back != nil {
 		l.back.Next = li
@@ -61,6 +74,11 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 func (l *list) Remove(i *ListItem) {
+	if l == nil {
+		panic("list is not initialized")
+	}
+	l.Lock()
+	defer l.Unlock()
 	if (i != nil) && (l.len > 0) {
 		switch {
 		case l.len == 1:
@@ -82,6 +100,11 @@ func (l *list) Remove(i *ListItem) {
 }
 
 func (l *list) MoveToFront(i *ListItem) {
+	if l == nil {
+		panic("list is not initialized")
+	}
+	l.Lock()
+	defer l.Unlock()
 	if (i != nil) && (l.len > 1) && (i != l.front) {
 		if i == l.back {
 			l.back = i.Prev
