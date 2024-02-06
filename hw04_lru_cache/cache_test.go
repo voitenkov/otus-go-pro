@@ -1,7 +1,6 @@
 package hw04lrucache
 
 import (
-	"fmt"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -126,14 +125,12 @@ func TestCacheMultithreadingWithLenAndClear(t *testing.T) {
 			go func(i int) {
 				defer wg.Done()
 				c.Set(Key(strconv.Itoa(i)), i)
-				fmt.Println(i)
 			}(i)
 		} else {
-			go func(i int) {
+			go func() {
 				defer wg.Done()
 				c.Get(Key(strconv.Itoa(rand.Intn(9))))
-				fmt.Println(i)
-			}(i)
+			}()
 		}
 	}
 	wg.Wait()
