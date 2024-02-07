@@ -55,14 +55,14 @@ func worker(id int, tasksChan <-chan Task, syncChan chan<- struct{}, doneChan <-
 	workerErrorsCount := 0
 	var err error
 	for task := range tasksChan {
-		fmt.Printf("WORKER %d: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-			id, errorsCount, m, runTasksCount, tasksCount)
+		// fmt.Printf("WORKER %d: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+		// 	id, errorsCount, m, runTasksCount, tasksCount)
 		if int(errorsCount) < m {
 			atomic.AddInt32(&taskNo, 1)
-			currentTask := int(taskNo)
-			fmt.Printf("WORKER %d: started task %d\n", id, currentTask)
+			// currentTask := int(taskNo)
+			// fmt.Printf("WORKER %d: started task %d\n", id, currentTask)
 			err = task()
-			fmt.Printf("WORKER %d: finished task %d\n", id, currentTask)
+			// fmt.Printf("WORKER %d: finished task %d\n", id, currentTask)
 			if err != nil {
 				atomic.AddInt32(&errorsCount, 1)
 				workerErrorsCount++
@@ -70,14 +70,14 @@ func worker(id int, tasksChan <-chan Task, syncChan chan<- struct{}, doneChan <-
 			atomic.AddInt32(&runTasksCount, 1)
 			select {
 			case <-doneChan:
-				fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
+				// fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
 				return
 			default:
 				syncChan <- struct{}{}
 			}
 		} else {
 			<-doneChan
-			fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
+			// fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
 			return
 		}
 	}
