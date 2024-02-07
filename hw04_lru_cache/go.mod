@@ -1,4 +1,4 @@
-module github.com/voitenkov/otus-go-pro
+module github.com/voitenkov/otus-go-pro/hw04_lru_cache
 
 go 1.21
 
