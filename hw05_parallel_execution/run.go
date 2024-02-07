@@ -31,17 +31,17 @@ func producer(tasksSlice []Task, tasksChan chan<- Task, syncChan <-chan struct{}
 	cond.Broadcast()
 
 	tasksCount = len(tasksSlice)
-	fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-		errorsCount, m, runTasksCount, tasksCount)
+	// fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+	// 	errorsCount, m, runTasksCount, tasksCount)
 	for (int(errorsCount) < m) && (int(runTasksCount) < tasksCount) {
 		<-syncChan
-		fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-			errorsCount, m, runTasksCount, tasksCount)
+		// fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+		// 	errorsCount, m, runTasksCount, tasksCount)
 	}
 
 	close(doneChan)
-	fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-		errorsCount, m, runTasksCount, tasksCount)
+	// fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+	// 	errorsCount, m, runTasksCount, tasksCount)
 	fmt.Println("PRODUCER: stopped service")
 }
 
