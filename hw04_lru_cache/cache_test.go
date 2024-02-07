@@ -2,6 +2,7 @@ package hw04lrucache
 
 import (
 	"math/rand"
+	"runtime"
 	"strconv"
 	"sync"
 	"testing"
@@ -49,14 +50,49 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
-	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+	t.Run("purge logic: size exceeded", func(t *testing.T) {
+		c := NewCache(3)
+
+		for i := 1; i < 5; i++ {
+			wasInCache := c.Set(Key(strconv.Itoa(i)), i)
+			require.False(t, wasInCache)
+		}
+
+		val, ok := c.Get("1")
+		require.False(t, ok)
+		require.Nil(t, val)
+
+		for i := 2; i < 5; i++ {
+			val, ok := c.Get(Key(strconv.Itoa(i)))
+			require.True(t, ok)
+			require.Equal(t, i, val)
+		}
+	})
+
+	t.Run("purge logic: long used", func(t *testing.T) {
+		c := NewCache(3)
+
+		for i := 1; i < 4; i++ {
+			wasInCache := c.Set(Key(strconv.Itoa(i)), i)
+			require.False(t, wasInCache)
+		}
+
+		for i := 1; i < 4; i++ {
+			val, ok := c.Get(Key(strconv.Itoa(i)))
+			require.True(t, ok)
+			require.Equal(t, i, val)
+		}
+
+		wasInCache := c.Set("4", 4)
+		require.False(t, wasInCache)
+
+		val, ok := c.Get("1")
+		require.False(t, ok)
+		require.Nil(t, val)
 	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
-	t.Skip() // Remove me if task with asterisk completed.
-
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -76,4 +112,29 @@ func TestCacheMultithreading(t *testing.T) {
 	}()
 
 	wg.Wait()
+	require.Equal(t, 2, runtime.NumGoroutine())
+}
+
+func TestCacheMultithreadingWithLenAndClear(t *testing.T) {
+	c := NewCache(10)
+	wg := &sync.WaitGroup{}
+	wg.Add(10)
+
+	for i := 0; i < 10; i++ {
+		if i%2 == 0 {
+			go func(i int) {
+				defer wg.Done()
+				c.Set(Key(strconv.Itoa(i)), i)
+			}(i)
+		} else {
+			go func() {
+				defer wg.Done()
+				c.Get(Key(strconv.Itoa(rand.Intn(9))))
+			}()
+		}
+	}
+	wg.Wait()
+	require.Equal(t, 5, c.Len())
+	c.Clear()
+	require.Equal(t, 0, c.Len())
 }

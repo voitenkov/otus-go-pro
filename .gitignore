@@ -26,5 +26,5 @@ ehthumbs.db
 Thumbs.db
 .vscode/
 *.bak
-go.work
+*.work
 go.work.sum
