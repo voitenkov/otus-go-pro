@@ -13,12 +13,13 @@ var (
 	wg                                            *sync.WaitGroup
 	ErrErrorsLimitExceeded                        = errors.New("errors limit exceeded")
 	errorsCount, runTasksCount, taskNo, tasksSent int32
-	tasksCount                                    int
 )
 
 type Task func() error
 
-func producer(tasksSlice []Task, tasksChan chan<- Task, syncChan <-chan struct{}, doneChan chan<- struct{}, m int) {
+func producer(tasksSlice []Task, tasksChan chan<- Task, syncChan <-chan struct{}, doneChan chan<- struct{},
+	tasksCount, m int,
+) {
 	defer wg.Done()
 	mu.Lock()
 	fmt.Println("PRODUCER: started service")
@@ -30,39 +31,39 @@ func producer(tasksSlice []Task, tasksChan chan<- Task, syncChan <-chan struct{}
 	mu.Unlock()
 	cond.Broadcast()
 
-	tasksCount = len(tasksSlice)
-	// fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-	// 	errorsCount, m, runTasksCount, tasksCount)
-	for (int(errorsCount) < m) && (int(runTasksCount) < tasksCount) {
+	fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+		int(atomic.LoadInt32(&errorsCount)), m, int(atomic.LoadInt32(&runTasksCount)), tasksCount)
+	for (int(atomic.LoadInt32(&errorsCount)) < m) && (int(atomic.LoadInt32(&runTasksCount)) < tasksCount) {
 		<-syncChan
-		// fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-		// 	errorsCount, m, runTasksCount, tasksCount)
+		fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+			int(atomic.LoadInt32(&errorsCount)), m, int(atomic.LoadInt32(&runTasksCount)), tasksCount)
 	}
 
 	close(doneChan)
-	// fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-	// 	errorsCount, m, runTasksCount, tasksCount)
+	fmt.Printf("PRODUCER: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+		int(atomic.LoadInt32(&errorsCount)), m, int(atomic.LoadInt32(&runTasksCount)), tasksCount)
 	fmt.Println("PRODUCER: stopped service")
 }
 
-func worker(id int, tasksChan <-chan Task, syncChan chan<- struct{}, doneChan <-chan struct{}, m int) {
+func worker(id int, tasksChan <-chan Task, syncChan chan<- struct{}, doneChan <-chan struct{}, tasksCount, m int) {
 	defer wg.Done()
 	mu.Lock()
 	for int(tasksSent) < tasksCount {
+		// fmt.Println("cond: ", cond)
 		cond.Wait()
 	}
 	mu.Unlock()
 	workerErrorsCount := 0
 	var err error
 	for task := range tasksChan {
-		// fmt.Printf("WORKER %d: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
-		// 	id, errorsCount, m, runTasksCount, tasksCount)
-		if int(errorsCount) < m {
+		fmt.Printf("WORKER %d: errors count: %d, errors limit: %d, tasks count: %d, tasks total: %d\n",
+			id, int(atomic.LoadInt32(&errorsCount)), m, int(atomic.LoadInt32(&runTasksCount)), tasksCount)
+		if int(atomic.LoadInt32(&errorsCount)) < m {
 			atomic.AddInt32(&taskNo, 1)
-			// currentTask := int(taskNo)
-			// fmt.Printf("WORKER %d: started task %d\n", id, currentTask)
+			currentTask := int(atomic.LoadInt32(&taskNo))
+			fmt.Printf("WORKER %d: started task %d\n", id, currentTask)
 			err = task()
-			// fmt.Printf("WORKER %d: finished task %d\n", id, currentTask)
+			fmt.Printf("WORKER %d: finished task %d\n", id, currentTask)
 			if err != nil {
 				atomic.AddInt32(&errorsCount, 1)
 				workerErrorsCount++
@@ -70,14 +71,14 @@ func worker(id int, tasksChan <-chan Task, syncChan chan<- struct{}, doneChan <-
 			atomic.AddInt32(&runTasksCount, 1)
 			select {
 			case <-doneChan:
-				// fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
+				fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
 				return
 			default:
 				syncChan <- struct{}{}
 			}
 		} else {
 			<-doneChan
-			// fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
+			fmt.Printf("WORKER %d: stopped with %d errors\n", id, workerErrorsCount)
 			return
 		}
 	}
@@ -103,16 +104,16 @@ func Run(tasksSlice []Task, n, m int) error {
 	doneChan := make(chan struct{})
 	taskNo = 0
 	wg = &sync.WaitGroup{}
-	cond = &sync.Cond{}
+	cond = sync.NewCond(&mu)
 	wg.Add(1)
 
 	// Create producer goroutine
-	go producer(tasksSlice, tasksChan, syncChan, doneChan, m)
+	go producer(tasksSlice, tasksChan, syncChan, doneChan, tasksCount, m)
 
 	// Create worker goroutines
 	for w := 1; w <= n; w++ {
 		wg.Add(1)
-		go worker(w, tasksChan, syncChan, doneChan, m)
+		go worker(w, tasksChan, syncChan, doneChan, tasksCount, m)
 	}
 
 	wg.Wait()
