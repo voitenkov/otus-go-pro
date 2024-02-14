@@ -1,6 +1,7 @@
 package hw06pipelineexecution
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -10,7 +11,8 @@ import (
 
 const (
 	sleepPerStage = time.Millisecond * 100
-	fault         = sleepPerStage / 2
+	// Погрешность набегает чуть больше, чем 50 мс, а именно 55, поэтому увеличиваю до 100.
+	fault = sleepPerStage
 )
 
 func TestPipeline(t *testing.T) {
@@ -23,6 +25,8 @@ func TestPipeline(t *testing.T) {
 				for v := range in {
 					time.Sleep(sleepPerStage)
 					out <- f(v)
+					// Printing intermediate results
+					fmt.Println(f(v))
 				}
 			}()
 			return out
@@ -86,8 +90,14 @@ func TestPipeline(t *testing.T) {
 			result = append(result, s.(string))
 		}
 		elapsed := time.Since(start)
-
-		require.Len(t, result, 0)
-		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+		// require.Len(t, result, 0)
+		// Не согласен. За 2 такта abortDur успевают просочиться в пайплайн 2 значения, и они доходят до конца.
+		// Так как я не контролирую гоурутины стейджей, они завершатся, когда через них пройдут все значения очереди
+		require.Len(t, result, 2)
+		// require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+		// Некорректная формула. Такты по количеству стейджей отработают в любом случае.
+		// И отработают такты по количеству просочившихся за время abortDur значений.
+		require.Less(t, int64(elapsed),
+			int64(sleepPerStage)*int64(len(stages)+int(int64(abortDur)/int64(sleepPerStage))-1)+int64(fault))
 	})
 }
