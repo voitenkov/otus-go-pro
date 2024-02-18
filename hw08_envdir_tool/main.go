@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strings"
 )
@@ -24,5 +23,5 @@ func main() {
 	}
 
 	returnCode := RunCmd(commandWithArgs, envDirMap)
-	fmt.Println(returnCode)
+	os.Exit(returnCode)
 }

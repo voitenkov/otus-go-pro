@@ -29,6 +29,7 @@ func ReadDir(dir string) (Environment, error) {
 		return nil, ErrReadingDir
 	}
 	for _, entry := range dirEntries {
+		// fmt.Println(entry)
 		if !entry.IsDir() {
 			fileName = entry.Name()
 			fileName = strings.Replace(fileName, "=", "", -1)
@@ -57,6 +58,7 @@ func ReadDir(dir string) (Environment, error) {
 			}
 
 			line = strings.TrimRight(line, " \t")
+			// fmt.Printf("file: %v, content: %v\n", fileName, line)
 			envDirMap[entry.Name()] = EnvValue{Value: line, NeedRemove: false}
 			file.Close()
 		}
@@ -81,13 +83,14 @@ func readLine(reader io.Reader) (line string, err error) {
 
 		if n > 0 {
 			char := rune[0]
-			// end of line or terminal zero
-			if char == '\n' || char == 0x00 {
+			if char == '\n' {
 				break
+			}
+			if char == 0x00 {
+				char = '\n'
 			}
 			lineSlice = append(lineSlice, char)
 		}
 	}
-
 	return string(lineSlice), nil
 }
