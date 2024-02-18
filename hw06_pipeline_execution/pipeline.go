@@ -1,7 +1,5 @@
 package hw06pipelineexecution
 
-import "time"
-
 type (
 	In  = <-chan interface{}
 	Out = In
@@ -13,8 +11,6 @@ type Stage func(in In) (out Out)
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	var out Out
 
-	go ClosePipeline(in, out, done)
-
 	for i, stage := range stages {
 		i := i
 		if i == 0 {
@@ -24,34 +20,25 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 		}
 	}
 
-	return out
+	return CheckDone(out, done)
 }
 
-func ClosePipeline(in In, out Out, done In) {
-	for {
-		select {
-		case <-done:
-			// Перехватываю очередь значений, чтобы она закрылась на стороне отправки
-			// for {
-			// 	select {
-			// 	case <-in:
-			// 	case <-out:
-			// 	default:
-			// 		return
-			// 	}
-			// }
-			for v := range in {
-				// fmt.Println("Take in", v)
-				_ = &v
+func CheckDone(in In, done In) Out {
+	out := make(Bi)
+	go func() {
+		defer close(out)
+		for {
+			select {
+			case <-done:
+				return
+			case data, ok := <-in:
+				if !ok {
+					return
+				}
+				out <- data
 			}
-
-			for v := range out {
-				// fmt.Println("Take out", v)
-				_ = &v
-			}
-			return
-		default:
-			time.Sleep(time.Millisecond * 1)
 		}
-	}
+	}()
+
+	return out
 }
