@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -12,14 +13,10 @@ func main() {
 		dir = dir + "/"
 	}
 
-	envDirMap, _ := ReadDir(dir)
-	for env, envValue := range envDirMap {
-		os.Unsetenv(env)
-		if envValue.NeedRemove {
-			delete(envDirMap, env)
-		} else {
-			os.Setenv(env, envValue.Value)
-		}
+	envDirMap, err := ReadDir(dir)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	returnCode := RunCmd(commandWithArgs, envDirMap)
