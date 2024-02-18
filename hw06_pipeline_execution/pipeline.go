@@ -1,9 +1,6 @@
 package hw06pipelineexecution
 
-import (
-	"fmt"
-	"time"
-)
+import "time"
 
 type (
 	In  = <-chan interface{}
@@ -13,10 +10,10 @@ type (
 
 type Stage func(in In) (out Out)
 
-func ExecutePipeline(in Bi, done In, stages ...Stage) Out {
+func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	var out Out
 
-	go ClosePipeline(in, done)
+	go ClosePipeline(in, out, done)
 
 	for i, stage := range stages {
 		i := i
@@ -26,16 +23,31 @@ func ExecutePipeline(in Bi, done In, stages ...Stage) Out {
 			out = stage(out)
 		}
 	}
+
 	return out
 }
 
-func ClosePipeline(in Bi, done In) {
+func ClosePipeline(in In, out Out, done In) {
 	for {
 		select {
 		case <-done:
 			// Перехватываю очередь значений, чтобы она закрылась на стороне отправки
+			// for {
+			// 	select {
+			// 	case <-in:
+			// 	case <-out:
+			// 	default:
+			// 		return
+			// 	}
+			// }
 			for v := range in {
-				fmt.Println("Take", v)
+				// fmt.Println("Take in", v)
+				_ = &v
+			}
+
+			for v := range out {
+				// fmt.Println("Take out", v)
+				_ = &v
 			}
 			return
 		default:
