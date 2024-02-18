@@ -11,7 +11,7 @@ import (
 func RunCmd(cmd []string, env Environment) (returnCode int) {
 	var envSlice []string
 	command := exec.Command(cmd[0], cmd[1:]...)
-	envSlice = command.Environ()
+	// envSlice = command.Environ()
 	for envName, envValue := range env {
 		envSlice = append(envSlice, envName+"="+envValue.Value)
 	}
