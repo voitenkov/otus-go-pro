@@ -9,14 +9,19 @@ import (
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
-	var envSlice []string
+	// var envSlice []string
 	command := exec.Command(cmd[0], cmd[1:]...)
+	command.Env = os.Environ()
 	// envSlice = command.Environ()
 	for envName, envValue := range env {
-		envSlice = append(envSlice, envName+"="+envValue.Value)
+		command.Env = append(command.Env, envName+"="+envValue.Value)
 	}
 
-	command.Env = envSlice
+	// for k, v := range command.Env {
+	// 	fmt.Printf("%v: ,%v\n", k, v)
+	// }
+
+	// command.Env = envSlice
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
