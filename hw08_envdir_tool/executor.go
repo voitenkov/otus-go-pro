@@ -17,15 +17,15 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	}
 
 	command := exec.Command(cmd[0], cmd[1:]...)
-	// command.Env = os.Environ()
+	command.Env = os.Environ()
 	for envName, envValue := range env {
 		command.Env = append(command.Env, envName+"="+envValue.Value)
 	}
 
-	added, exists := os.LookupEnv("ADDED")
-	if exists {
-		command.Env = append(command.Env, "ADDED="+added)
-	}
+	// added, exists := os.LookupEnv("ADDED")
+	// if exists {
+	// 	command.Env = append(command.Env, "ADDED="+added)
+	// }
 
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
