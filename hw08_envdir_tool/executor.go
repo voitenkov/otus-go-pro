@@ -22,11 +22,6 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		command.Env = append(command.Env, envName+"="+envValue.Value)
 	}
 
-	// added, exists := os.LookupEnv("ADDED")
-	// if exists {
-	// 	command.Env = append(command.Env, "ADDED="+added)
-	// }
-
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr

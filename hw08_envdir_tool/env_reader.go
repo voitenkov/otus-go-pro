@@ -22,6 +22,9 @@ var ErrReadingDir = errors.New("error reading directory")
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
 	var fileName string
+	if !strings.HasSuffix(dir, "/") {
+		dir += "/"
+	}
 
 	dirEntries, err := os.ReadDir(dir)
 	envDirMap := make(Environment)
@@ -29,11 +32,9 @@ func ReadDir(dir string) (Environment, error) {
 		return nil, ErrReadingDir
 	}
 	for _, entry := range dirEntries {
-		// fmt.Println(entry)
 		if !entry.IsDir() {
 			fileName = entry.Name()
-			fileName = strings.Replace(fileName, "=", "", -1)
-
+			envName := strings.ReplaceAll(fileName, "=", "")
 			fileInfo, err := os.Stat(dir + fileName)
 			if err != nil {
 				fmt.Printf("error reading info of file %v: %v\n", fileName, err)
@@ -41,7 +42,7 @@ func ReadDir(dir string) (Environment, error) {
 			}
 
 			if fileInfo.Size() == 0 {
-				envDirMap[fileName] = EnvValue{Value: "", NeedRemove: true}
+				envDirMap[envName] = EnvValue{Value: "", NeedRemove: true}
 				continue
 			}
 
@@ -58,8 +59,7 @@ func ReadDir(dir string) (Environment, error) {
 			}
 
 			line = strings.TrimRight(line, " \t")
-			// fmt.Printf("file: %v, content: %v\n", fileName, line)
-			envDirMap[entry.Name()] = EnvValue{Value: line, NeedRemove: false}
+			envDirMap[envName] = EnvValue{Value: line, NeedRemove: false}
 			file.Close()
 		}
 	}
@@ -70,9 +70,9 @@ func ReadDir(dir string) (Environment, error) {
 func readLine(reader io.Reader) (line string, err error) {
 	var n int
 	var lineSlice []byte
-	rune := make([]byte, 1)
+	runeSlice := make([]byte, 1)
 	for {
-		n, err = reader.Read(rune)
+		n, err = reader.Read(runeSlice)
 		if err == io.EOF {
 			break
 		}
@@ -82,7 +82,7 @@ func readLine(reader io.Reader) (line string, err error) {
 		}
 
 		if n > 0 {
-			char := rune[0]
+			char := runeSlice[0]
 			if char == '\n' {
 				break
 			}
