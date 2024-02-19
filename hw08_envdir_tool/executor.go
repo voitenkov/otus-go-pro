@@ -10,7 +10,6 @@ import (
 func RunCmd(cmd []string, env Environment) (returnCode int) {
 	for envName, envValue := range env {
 		if envValue.NeedRemove {
-			// delete(envDirMap, envName)
 			os.Unsetenv(envName)
 		} else {
 			os.Setenv(envName, envValue.Value)
@@ -18,17 +17,16 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	}
 
 	command := exec.Command(cmd[0], cmd[1:]...)
-	command.Env = os.Environ()
-	// envSlice = command.Environ()
+	// command.Env = os.Environ()
 	for envName, envValue := range env {
 		command.Env = append(command.Env, envName+"="+envValue.Value)
 	}
 
-	// for k, v := range command.Env {
-	// 	fmt.Printf("%v: ,%v\n", k, v)
-	// }
+	added, exists := os.LookupEnv("ADDED")
+	if exists {
+		command.Env = append(command.Env, "ADDED="+added)
+	}
 
-	// command.Env = envSlice
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
@@ -38,7 +36,9 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		if errors.As(err, &exitError) {
 			return exitError.ExitCode()
 		}
+
 		return 1
 	}
+
 	return 0
 }
