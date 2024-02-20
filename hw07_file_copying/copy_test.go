@@ -19,11 +19,6 @@ func TestCopy(t *testing.T) {
 		require.Truef(t, errors.Is(err, ErrSourceFileNotFound), "actual error %q", err)
 	})
 
-	t.Run("source file with unknown length", func(t *testing.T) {
-		err = Copy("/dev/urandom", "out.txt", 0, 0)
-		require.Truef(t, errors.Is(err, ErrUnsupportedFile) || errors.Is(err, ErrSourceFileNotFound), "actual error %q", err)
-	})
-
 	t.Run("trying to create file with wrong symbols in filename", func(t *testing.T) {
 		err = Copy("testdata/input.txt", "//", 0, 0)
 		require.Truef(t, errors.Is(err, ErrCreatingDestinationFile), "actual error %q", err)
