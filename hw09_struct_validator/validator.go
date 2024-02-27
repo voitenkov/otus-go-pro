@@ -32,8 +32,10 @@ type ValidationErrors []ValidationError
 type Validator struct{}
 
 var (
-	errorsWrapped    error
-	validationErrors ValidationErrors
+	errorsWrapped     error
+	validationErrors  ValidationErrors
+	validatorObjValue reflect.Value
+	validatorObjType  reflect.Type
 	// Program and validator tags syntax errors.
 	ErrNilValue          = errors.New("nil value in input")
 	ErrStructureExpected = errors.New("structure kind expected in input")
@@ -163,7 +165,6 @@ func (v Validator) Regexp(validatorValue string, validatedValue any) CustomError
 func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 	var (
 		fieldKind, sliceKind reflect.Kind
-		ok                   bool
 		err                  error
 		strValidatedValue    string
 	)
@@ -178,30 +179,21 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 	}
 
 	switch {
-	case fieldKind == reflect.String:
-		strValidatedValue = reflect.ValueOf(validatedValue).String()
-		if !StringIn(strValidatedValue, validatorValueParsed) {
+	case fieldKind == reflect.String || fieldKind == reflect.Int:
+		strValidatedValue = fmt.Sprint(validatedValue)
+		if !InSet(strValidatedValue, validatorValueParsed) {
 			err = ErrInValidator
 		}
-	case fieldKind == reflect.Slice && sliceKind == reflect.String:
+	case fieldKind == reflect.Slice && (sliceKind == reflect.String):
 		strSlice, ok := validatedValue.([]string)
 		if !ok {
 			return CustomError{ProgramError, ErrConvertingValue}
 		}
 		for _, strValidatedValue = range strSlice {
-			if !StringIn(strValidatedValue, validatorValueParsed) {
+			if !InSet(strValidatedValue, validatorValueParsed) {
 				err = ErrInValidator
 				break
 			}
-		}
-	case fieldKind == reflect.Int:
-		ok, err = IntIn(validatedValue.(int), validatorValueParsed)
-		if err != nil {
-			return CustomError{ProgramError, err}
-		}
-
-		if !ok {
-			err = ErrInValidator
 		}
 	case fieldKind == reflect.Slice && sliceKind == reflect.Int:
 		intSlice, ok := validatedValue.([]int)
@@ -209,12 +201,8 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 			return CustomError{ProgramError, ErrConvertingValue}
 		}
 		for _, intValidatedValue := range intSlice {
-			ok, err = IntIn(intValidatedValue, validatorValueParsed)
-			if err != nil {
-				return CustomError{ProgramError, err}
-			}
-
-			if !ok {
+			strValidatedValue := strconv.Itoa(intValidatedValue)
+			if !InSet(strValidatedValue, validatorValueParsed) {
 				err = ErrInValidator
 				break
 			}
@@ -223,6 +211,15 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 		return CustomError{ProgramError, ErrValidatorMatching}
 	}
 	return CustomError{ValidatorError, err}
+}
+
+func InSet(value string, set []string) bool {
+	for _, matchString := range set {
+		if value == matchString {
+			return true
+		}
+	}
+	return false
 }
 
 func (v Validator) Min(validatorValue string, validatedValue any) CustomError {
@@ -305,32 +302,6 @@ func (v Validator) Nested(validatorValue string, validatedValue any) CustomError
 	return CustomError{ValidatorError, err}
 }
 
-func StringIn(str string, in []string) bool {
-	var validated bool
-	for _, matchString := range in {
-		if str == matchString {
-			validated = true
-			break
-		}
-	}
-	return validated
-}
-
-func IntIn(i int, in []string) (bool, error) {
-	var validated bool
-	for _, matchString := range in {
-		intValue, err := strconv.Atoi(matchString)
-		if err != nil {
-			return false, ErrInvalidValidator
-		}
-		if i == intValue {
-			validated = true
-			break
-		}
-	}
-	return validated, nil
-}
-
 func Validate(v interface{}) error {
 	structure, fieldCount, err := PrepareStructure(v)
 	if err != nil {
@@ -338,8 +309,8 @@ func Validate(v interface{}) error {
 	}
 
 	validatorObj := Validator{}
-	validatorObjValue := reflect.ValueOf(validatorObj)
-	validatorObjType := reflect.TypeOf(validatorObj)
+	validatorObjValue = reflect.ValueOf(validatorObj)
+	validatorObjType = reflect.TypeOf(validatorObj)
 
 	for i := 0; i < fieldCount; i++ {
 		field := structure.Type().Field(i)
@@ -363,25 +334,9 @@ func Validate(v interface{}) error {
 				continue
 			}
 
-			validatorType, validatorValue, err := ParseValidator(validator)
+			err := RunValidator(validator, field.Name, fieldValue)
 			if err != nil {
 				return err
-			}
-
-			_, validatorExist := validatorObjType.MethodByName(validatorType)
-			if !validatorExist {
-				return ErrUnknownValidator
-			}
-
-			params := []reflect.Value{reflect.ValueOf(validatorValue), fieldValue}
-			output := validatorObjValue.MethodByName(validatorType).Call(params)[0].Interface().(CustomError)
-
-			if output.ErrorType == ProgramError {
-				return output.Error
-			}
-
-			if output.ErrorType == ValidatorError && output.Error != nil {
-				validationErrors = append(validationErrors, ValidationError{Field: field.Name, Err: output.Error})
 			}
 		}
 	}
@@ -406,6 +361,30 @@ func PrepareStructure(v interface{}) (structure reflect.Value, fieldCount int, e
 		return structure, fieldCount, ErrEmptyStructure
 	}
 	return structure, fieldCount, nil
+}
+
+func RunValidator(validator, fieldName string, fieldValue reflect.Value) error {
+	validatorType, validatorValue, err := ParseValidator(validator)
+	if err != nil {
+		return err
+	}
+
+	_, validatorExist := validatorObjType.MethodByName(validatorType)
+	if !validatorExist {
+		return ErrUnknownValidator
+	}
+
+	params := []reflect.Value{reflect.ValueOf(validatorValue), fieldValue}
+	output := validatorObjValue.MethodByName(validatorType).Call(params)[0].Interface().(CustomError)
+
+	if output.ErrorType == ProgramError {
+		return output.Error
+	}
+
+	if output.ErrorType == ValidatorError && output.Error != nil {
+		validationErrors = append(validationErrors, ValidationError{Field: fieldName, Err: output.Error})
+	}
+	return nil
 }
 
 func ParseValidator(validator string) (validatorType, validatorValue string, err error) {
