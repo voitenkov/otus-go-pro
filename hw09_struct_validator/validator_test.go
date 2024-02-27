@@ -48,11 +48,6 @@ type (
 		Code int
 		Body string `validate:"max:10"`
 	}
-
-	RequestInvalid struct {
-		Code int `validate:"in"`
-		Body string
-	}
 )
 
 func TestValidate(t *testing.T) {
@@ -135,13 +130,6 @@ func TestValidate(t *testing.T) {
 				Body: "test",
 			},
 			expectedErr: ErrValidatorMatching,
-		},
-		{
-			in: RequestInvalid{
-				Code: 200,
-				Body: "test",
-			},
-			expectedErr: ErrInvalidValidator,
 		},
 		{
 			in: App{

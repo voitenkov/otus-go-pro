@@ -168,7 +168,7 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 		err                  error
 		strValidatedValue    string
 	)
-	if validatorValue == "" || validatorValue == "," {
+	if validatorValue == "," {
 		return CustomError{ProgramError, ErrInvalidValidator}
 	}
 
@@ -178,15 +178,13 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 		sliceKind = reflect.TypeOf(validatedValue).Elem().Kind()
 	}
 
-	if fieldKind == reflect.String || fieldKind == reflect.Int {
+	switch {
+	case fieldKind == reflect.String || fieldKind == reflect.Int:
 		strValidatedValue = fmt.Sprint(validatedValue)
 		if !InSet(strValidatedValue, validatorValueParsed) {
 			err = ErrInValidator
 		}
-		return CustomError{ValidatorError, err}
-	}
-
-	if fieldKind == reflect.Slice && (sliceKind == reflect.String) {
+	case fieldKind == reflect.Slice && (sliceKind == reflect.String):
 		strSlice, ok := validatedValue.([]string)
 		if !ok {
 			return CustomError{ProgramError, ErrConvertingValue}
@@ -197,10 +195,7 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 				break
 			}
 		}
-		return CustomError{ValidatorError, err}
-	}
-
-	if fieldKind == reflect.Slice && sliceKind == reflect.Int {
+	case fieldKind == reflect.Slice && sliceKind == reflect.Int:
 		intSlice, ok := validatedValue.([]int)
 		if !ok {
 			return CustomError{ProgramError, ErrConvertingValue}
@@ -212,10 +207,10 @@ func (v Validator) In(validatorValue string, validatedValue any) CustomError {
 				break
 			}
 		}
-		return CustomError{ValidatorError, err}
+	default:
+		return CustomError{ProgramError, ErrValidatorMatching}
 	}
-
-	return CustomError{ProgramError, ErrValidatorMatching}
+	return CustomError{ValidatorError, err}
 }
 
 func InSet(value string, set []string) bool {
