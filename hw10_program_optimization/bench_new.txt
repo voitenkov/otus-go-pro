@@ -1,0 +1,18 @@
+goos: windows
+goarch: amd64
+pkg: github.com/voitenkov/otus-go-pro/hw10_program_optimization
+cpu: 12th Gen Intel(R) Core(TM) i7-1255U
+BenchmarkSimplestNTimes-12    	     134	   8041906 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     147	   7926047 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     144	   8091949 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     150	   8243225 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     150	   8063557 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     147	   7937997 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     141	   9488920 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     142	   8380301 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     144	   8442376 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     136	   8749093 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     138	   9691522 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkSimplestNTimes-12    	     144	   8637540 ns/op	    5928 B/op	      41 allocs/op
+PASS
+ok  	github.com/voitenkov/otus-go-pro/hw10_program_optimization	25.481s

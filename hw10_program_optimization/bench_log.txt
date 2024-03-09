@@ -1,0 +1,107 @@
+----------------------------------------------------------------------------------------------------------------------------
+Without optimization
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 610.8571ms / 300ms
+    stats_optimization_test.go:47: memory used: 308Mb / 30Mb
+    stats_optimization_test.go:49:
+                Error Trace:    C:/Users/aavoitenko/Git/otus/otus-go-pro/hw10_program_optimization/stats_optimization_test.go:49
+                Error:          "610857100" is not less than "300000000"
+                Test:           TestGetDomainStat_Time_And_Memory
+                Messages:       the program is too slow
+--- FAIL: TestGetDomainStat_Time_And_Memory (19.35s)
+FAIL
+FAIL    github.com/voitenkov/otus-go-pro/hw10_program_optimization      19.796s
+FAIL
+----------------------------------------------------------------------------------------------------------------------------
+getUsers: EasyJSON optimization 
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 319.249ms / 300ms
+    stats_optimization_test.go:47: memory used: 276Mb / 30Mb
+    stats_optimization_test.go:49: 
+                Error Trace:    C:/Users/aavoitenko/Git/otus/otus-go-pro/hw10_program_optimization/stats_optimization_test.go:49
+                Error:          "319249000" is not less than "300000000"
+                Test:           TestGetDomainStat_Time_And_Memory
+                Messages:       the program is too slow
+--- FAIL: TestGetDomainStat_Time_And_Memory (6.12s)
+FAIL
+FAIL    github.com/voitenkov/otus-go-pro/hw10_program_optimization      6.566s
+FAIL
+----------------------------------------------------------------------------------------------------------------------------
+countDomains: Regexp pattern pre-compiled
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 201.174ms / 300ms
+    stats_optimization_test.go:47: memory used: 144Mb / 30Mb
+    stats_optimization_test.go:50:
+                Error Trace:    C:/Users/aavoitenko/Git/otus/otus-go-pro/hw10_program_optimization/stats_optimization_test.go:50
+                Error:          "151534656" is not less than "31457280"
+                Test:           TestGetDomainStat_Time_And_Memory
+                Messages:       the program is too greedy
+--- FAIL: TestGetDomainStat_Time_And_Memory (2.61s)
+FAIL
+FAIL    github.com/voitenkov/otus-go-pro/hw10_program_optimization      3.022s
+FAIL
+----------------------------------------------------------------------------------------------------------------------------
+getUsers: reading file line by line, replaced array with slice
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench . -cpuprofile=cpu -memprofile=mem .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 222.8743ms / 300ms
+    stats_optimization_test.go:47: memory used: 97Mb / 30Mb
+    stats_optimization_test.go:50:
+                Error Trace:    C:/Users/aavoitenko/Git/otus/otus-go-pro/hw10_program_optimization/stats_optimization_test.go:50
+                Error:          "102097192" is not less than "31457280"
+                Test:           TestGetDomainStat_Time_And_Memory
+                Messages:       the program is too greedy
+--- FAIL: TestGetDomainStat_Time_And_Memory (3.60s)
+FAIL
+FAIL    github.com/voitenkov/otus-go-pro/hw10_program_optimization      4.144s
+FAIL
+----------------------------------------------------------------------------------------------------------------------------
+getUsers: replaced Regexp with Strings function
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench . -cpuprofile=cpu -memprofile=mem .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 182.8694ms / 300ms
+    stats_optimization_test.go:47: memory used: 97Mb / 30Mb
+    stats_optimization_test.go:50:
+                Error Trace:    C:/Users/aavoitenko/Git/otus/otus-go-pro/hw10_program_optimization/stats_optimization_test.go:50
+                Error:          "101856368" is not less than "31457280"
+                Test:           TestGetDomainStat_Time_And_Memory
+                Messages:       the program is too greedy
+--- FAIL: TestGetDomainStat_Time_And_Memory (3.18s)
+FAIL
+FAIL    github.com/voitenkov/otus-go-pro/hw10_program_optimization      3.792s
+FAIL
+----------------------------------------------------------------------------------------------------------------------------
+getUsers: get back array instead of slice
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench . -cpuprofile=cpu -memprofile=mem .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 164.6437ms / 300ms
+    stats_optimization_test.go:47: memory used: 45Mb / 30Mb
+    stats_optimization_test.go:50:
+                Error Trace:    C:/Users/aavoitenko/Git/otus/otus-go-pro/hw10_program_optimization/stats_optimization_test.go:50
+                Error:          "47902576" is not less than "31457280"
+                Test:           TestGetDomainStat_Time_And_Memory
+                Messages:       the program is too greedy
+--- FAIL: TestGetDomainStat_Time_And_Memory (2.64s)
+FAIL
+FAIL    github.com/voitenkov/otus-go-pro/hw10_program_optimization      3.246s
+FAIL
+----------------------------------------------------------------------------------------------------------------------------
+countDomains: changed Scanner Text() method to Bytes()
+----------------------------------------------------------------------------------------------------------------------------
+go test -v -count=1 -timeout=30s -tags bench . -cpuprofile=cpu -memprofile=mem .
+=== RUN   TestGetDomainStat_Time_And_Memory
+    stats_optimization_test.go:46: time used: 161.2326ms / 300ms
+    stats_optimization_test.go:47: memory used: 10Mb / 30Mb
+--- PASS: TestGetDomainStat_Time_And_Memory (2.48s)
+PASS
+ok      github.com/voitenkov/otus-go-pro/hw10_program_optimization      3.096s
+
