@@ -16,7 +16,6 @@ import (
 var (
 	address                    string
 	ctxMain                    context.Context
-	stop                       context.CancelFunc
 	timeout                    time.Duration
 	err                        error
 	ErrNoArguments             = errors.New("no arguments provided")
@@ -34,8 +33,7 @@ func init() {
 }
 
 func main() {
-	ctxMain, stop = signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
+	ctxMain, _ = signal.NotifyContext(context.Background(), os.Interrupt)
 	go func() {
 		<-ctxMain.Done()
 		fmt.Println(ctxMain.Err())
@@ -54,10 +52,8 @@ func main() {
 		port, converr := strconv.Atoi(flag.Arg(1))
 		if converr != nil {
 			err = ErrPortNotNumeric
-		} else {
-			if port < 1 || port > 65535 {
-				err = ErrPortOutOfBounds
-			}
+		} else if port < 1 || port > 65535 {
+			err = ErrPortOutOfBounds
 		}
 	case argsCount > 2:
 		err = ErrExtraArgumentsProvided

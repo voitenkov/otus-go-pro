@@ -17,6 +17,8 @@ type TelnetClient interface {
 	Receive() error
 }
 
+// Place your code here.
+// P.S. Author's solution takes no more than 50 lines.
 type telnetClient struct {
 	address string
 	timeout time.Duration
@@ -51,7 +53,6 @@ func (tc *telnetClient) Send() error {
 		return ErrNoConnectionEstablished
 	}
 
-	// tc.conn.SetWriteDeadline(time.Now().Add(time.Second * 1))
 	_, err := io.Copy(tc.conn, tc.in)
 	if err != nil {
 		return ErrTerminatedByUser
@@ -88,6 +89,3 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 		out:     out,
 	}
 }
-
-// Place your code here.
-// P.S. Author's solution takes no more than 50 lines.
