@@ -17,6 +17,7 @@ var (
 	address                    string
 	ctxMain                    context.Context
 	timeout                    time.Duration
+	stop                       context.CancelFunc
 	err                        error
 	ErrNoArguments             = errors.New("no arguments provided")
 	ErrNoPortProvided          = errors.New("no port provided")
@@ -33,7 +34,8 @@ func init() {
 }
 
 func main() {
-	ctxMain, _ = signal.NotifyContext(context.Background(), os.Interrupt)
+	ctxMain, stop = signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 	go func() {
 		<-ctxMain.Done()
 		fmt.Println(ctxMain.Err())
@@ -61,7 +63,7 @@ func main() {
 
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return
 	}
 
 	address = net.JoinHostPort(flag.Arg(0), flag.Arg(1))
@@ -73,7 +75,8 @@ func main() {
 	err = client.Connect()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		stop()
+		os.Exit(1) //nolint:gocritic
 	}
 
 	wg := &sync.WaitGroup{}
@@ -85,6 +88,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "...EOF")
 			fmt.Println(err)
 			client.Close()
+			stop()
 			os.Exit(1)
 		}
 	}()
@@ -97,6 +101,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "...Connection was closed by peer")
 			fmt.Println(err)
 			client.Close()
+			stop()
 			os.Exit(1)
 		}
 	}()
