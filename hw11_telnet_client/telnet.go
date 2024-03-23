@@ -1,11 +1,8 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"io"
 	"net"
-	"os"
 	"time"
 )
 
@@ -27,29 +24,10 @@ type telnetClient struct {
 }
 
 func (tc *telnetClient) Connect() error {
-	// _, err := net.ResolveTCPAddr("tcp4", tc.address)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	dialer := &net.Dialer{}
-	if ctxMain == nil {
-		ctxMain = context.Background()
-	}
-	// ctx, cancel := context.WithTimeout(ctxMain, tc.timeout)
-	// defer cancel()
-	// conn, err := dialer.DialContext(ctx, "tcp4", tc.address)
-	// if err != nil {
-	// 	return fmt.Errorf("cannot connect to %v: %w", tc.address, err)
-	// }
-
-	conn, err := dialer.Dial("tcp4", tc.address)
+	tc.conn, err = net.Dial("tcp", tc.address)
 	if err != nil {
-		return fmt.Errorf("cannot connect to %v: %w", tc.address, err)
+		return err
 	}
-
-	fmt.Fprintln(os.Stderr, "...Connected to", tc.address)
-	tc.conn = conn
 	return nil
 }
 
