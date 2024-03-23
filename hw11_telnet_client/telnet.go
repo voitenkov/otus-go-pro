@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net"
+	"os"
 	"time"
 )
 
@@ -24,10 +26,11 @@ type telnetClient struct {
 }
 
 func (tc *telnetClient) Connect() error {
-	tc.conn, err = net.Dial("tcp", tc.address)
+	tc.conn, err = net.DialTimeout("tcp", tc.address, tc.timeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot connect to %v: %w", tc.address, err)
 	}
+	fmt.Fprintln(os.Stderr, "...Connected to", tc.address)
 	return nil
 }
 
