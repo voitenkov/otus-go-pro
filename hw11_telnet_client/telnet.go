@@ -36,12 +36,18 @@ func (tc *telnetClient) Connect() error {
 	if ctxMain == nil {
 		ctxMain = context.Background()
 	}
-	ctx, cancel := context.WithTimeout(ctxMain, tc.timeout)
-	defer cancel()
-	conn, err := dialer.DialContext(ctx, "tcp4", tc.address)
+	// ctx, cancel := context.WithTimeout(ctxMain, tc.timeout)
+	// defer cancel()
+	// conn, err := dialer.DialContext(ctx, "tcp4", tc.address)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot connect to %v: %w", tc.address, err)
+	// }
+
+	conn, err := dialer.Dial("tcp4", tc.address)
 	if err != nil {
 		return fmt.Errorf("cannot connect to %v: %w", tc.address, err)
 	}
+
 	fmt.Fprintln(os.Stderr, "...Connected to", tc.address)
 	tc.conn = conn
 	return nil
