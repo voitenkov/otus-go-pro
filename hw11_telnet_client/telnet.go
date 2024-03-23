@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"time"
@@ -28,10 +27,10 @@ type telnetClient struct {
 }
 
 func (tc *telnetClient) Connect() error {
-	_, err := net.ResolveTCPAddr("tcp4", tc.address)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// _, err := net.ResolveTCPAddr("tcp4", tc.address)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	dialer := &net.Dialer{}
 	if ctxMain == nil {
