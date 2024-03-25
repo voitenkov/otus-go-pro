@@ -65,7 +65,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	addr := net.JoinHostPort(s.host, s.port)
 	helloWorldHandlerFunc := http.HandlerFunc(s.HelloWorld)
-	injectUserIDHandler := injectUserID(helloWorldHandlerFunc, userID)
+	injectUserIDHandler := injectUserID(helloWorldHandlerFunc, userID.String())
 	handler := s.loggingMiddleware(injectUserIDHandler)
 	http.Handle("GET /hello/", handler)
 
@@ -97,16 +97,15 @@ func (s *Server) Stop(ctx context.Context) error {
 // Hello world handler.
 func (s *Server) HelloWorld(w http.ResponseWriter, r *http.Request) {
 	userID := ""
-	if m := r.Context().Value("userID"); m != nil {
-		if value, ok := m.(string); ok {
-			userID = value
-		}
+	key := UserID("userID")
+	if m := r.Context().Value(key); m != nil {
+		userID = m.(string)
 	}
 	w.Header().Add("userID", userID)
 	w.Write([]byte("Hello, world, from UserID " + userID))
 }
 
-func injectUserID(next http.Handler, userID uuid.UUID) http.Handler {
+func injectUserID(next http.Handler, userID string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), UserID("userID"), userID)
 		req := r.WithContext(ctx)

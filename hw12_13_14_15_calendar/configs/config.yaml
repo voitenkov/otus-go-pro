@@ -2,7 +2,7 @@ logger:
   level: info
 
 server:
-  host: calendar
+  host: localhost
   port: 8080
 
 db:
