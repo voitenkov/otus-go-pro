@@ -39,11 +39,11 @@ type Application interface {
 }
 
 type EventRequest struct {
-	Title        string                `json:"title"`
-	Description  string                `json:"description"`
-	StartTime    storage.EventTime     `json:"startTime"`
-	Duration     storage.EventDuration `json:"duration"`
-	NotifyBefore storage.EventDuration `json:"notifyBefore"`
+	Title        string            `json:"title"`
+	Description  string            `json:"description"`
+	StartTime    storage.EventTime `json:"startTime"`
+	FinishTime   storage.EventTime `json:"finishTime"`
+	NotifyBefore int               `json:"notifyBefore"`
 }
 
 type UserID string

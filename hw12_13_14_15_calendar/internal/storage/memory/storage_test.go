@@ -20,8 +20,8 @@ func TestStorage(t *testing.T) {
 		ID:           id,
 		UserID:       userID,
 		Title:        "Meeting",
-		StartTime:    storage.EventTime(time.Date(2024, time.January, 0o1, 10, 0, 0, 0, time.UTC)),
-		FinishTime:   storage.EventTime(time.Date(2024, time.January, 0o1, 11, 0, 0, 0, time.UTC)),
+		StartTime:    storage.EventTime(time.Date(2024, time.January, 1, 10, 0, 0, 0, time.UTC)),
+		FinishTime:   storage.EventTime(time.Date(2024, time.January, 1, 11, 0, 0, 0, time.UTC)),
 		NotifyBefore: 60,
 	}
 
@@ -29,8 +29,8 @@ func TestStorage(t *testing.T) {
 		ID:           id,
 		UserID:       userID,
 		Title:        "Party",
-		StartTime:    storage.EventTime(time.Date(2024, time.January, 0o1, 10, 0, 0, 0, time.UTC)),
-		FinishTime:   storage.EventTime(time.Date(2024, time.January, 0o1, 11, 0, 0, 0, time.UTC)),
+		StartTime:    storage.EventTime(time.Date(2024, time.January, 1, 10, 0, 0, 0, time.UTC)),
+		FinishTime:   storage.EventTime(time.Date(2024, time.January, 1, 11, 0, 0, 0, time.UTC)),
 		NotifyBefore: 60,
 	}
 
@@ -96,8 +96,8 @@ func TestStorageConcurrent(t *testing.T) {
 				ID:           id,
 				UserID:       userID,
 				Title:        "Meeting",
-				StartTime:    storage.EventTime(time.Date(2024, time.January, 0o1, 10, 0, 0, 0, time.UTC)),
-				FinishTime:   storage.EventTime(time.Date(2024, time.January, 0o1, 11, 0, 0, 0, time.UTC)),
+				StartTime:    storage.EventTime(time.Date(2024, time.January, 1, 10, 0, 0, 0, time.UTC)),
+				FinishTime:   storage.EventTime(time.Date(2024, time.January, 1, 11, 0, 0, 0, time.UTC)),
 				NotifyBefore: 60,
 			}
 			err := memstor.CreateEvent(ctx, *testEvent)
@@ -113,8 +113,8 @@ func TestStorageConcurrent(t *testing.T) {
 				ID:           id,
 				UserID:       userID,
 				Title:        "Meeting",
-				StartTime:    storage.EventTime(time.Date(2024, time.January, 0o1, 10, 0, 0, 0, time.UTC)),
-				FinishTime:   storage.EventTime(time.Date(2024, time.January, 0o1, 11, 0, 0, 0, time.UTC)),
+				StartTime:    storage.EventTime(time.Date(2024, time.January, 1, 10, 0, 0, 0, time.UTC)),
+				FinishTime:   storage.EventTime(time.Date(2024, time.January, 1, 11, 0, 0, 0, time.UTC)),
 				NotifyBefore: 60,
 			}
 			err := memstor.CreateEvent(ctx, *testEvent)

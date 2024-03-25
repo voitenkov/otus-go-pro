@@ -7,9 +7,8 @@ import (
 )
 
 type (
-	EventTime     time.Time
-	EventDuration time.Duration
-	EventDate     time.Time
+	EventTime time.Time
+	EventDate time.Time
 )
 
 type Event struct {
@@ -19,5 +18,5 @@ type Event struct {
 	Description  string    // Описание события - длинный текст, опционально
 	StartTime    EventTime // Дата и время начала события
 	FinishTime   EventTime // Дата и время окончания события
-	NotifyBefore int       // За сколько времени высылать уведомление, опционально
+	NotifyBefore int       // За сколько времени (минуты) высылать уведомление, опционально
 }
