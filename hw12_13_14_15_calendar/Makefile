@@ -35,4 +35,7 @@ lint: install-lint-deps
 build-migrations:
 	go build -v -o $(BIN_MIGRATION) ./cmd/migration
 
-.PHONY: build run build-img run-img version test lint build-migrations
+run-migrations: build-migrations
+	$(BIN_MIGRATION) -config ./configs/config.yaml
+
+.PHONY: build run build-img run-img version test lint build-migrations run-migrations
