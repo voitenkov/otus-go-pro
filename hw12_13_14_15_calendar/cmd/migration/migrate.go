@@ -60,5 +60,5 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Println("successfully migrations")
+	log.Println("migrations completed successfully!")
 }
