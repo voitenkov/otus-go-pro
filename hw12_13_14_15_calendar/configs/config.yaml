@@ -10,7 +10,7 @@ db:
   sql:
     driver: pgx
     name: calendar
-    user: postgres
-    password: postgres
-    host: postgres
+    user: otus_user
+    password: otus_password
+    host: 127.0.0.1
     port: 5432

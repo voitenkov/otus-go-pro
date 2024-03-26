@@ -14,12 +14,12 @@ func New(cfg *config.Config) (app.Storage, error) {
 	case "memory":
 		return memorystorage.New(), nil
 	case "sql":
-		return sqlstorage.New(cfg, getDsn(cfg.DB.SQL)), nil
+		return sqlstorage.New(cfg, GetDsn(cfg.DB.SQL)), nil
 	default:
 		return nil, fmt.Errorf("unknown database type: %q", cfg.DB.Type)
 	}
 }
 
-func getDsn(sql config.SQLConf) string {
+func GetDsn(sql config.SQLConf) string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", sql.User, sql.Password, sql.Host, sql.Port, sql.Name)
 }
