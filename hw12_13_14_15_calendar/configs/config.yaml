@@ -1,0 +1,16 @@
+logger:
+  level: info
+
+server:
+  host: localhost
+  port: 8080
+
+db:
+  type: sql
+  sql:
+    driver: pgx
+    name: calendar
+    user: otus_user
+    password: otus_password
+    host: 127.0.0.1
+    port: 5432

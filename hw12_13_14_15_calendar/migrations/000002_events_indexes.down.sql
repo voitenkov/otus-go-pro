@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS list_events_idx;
