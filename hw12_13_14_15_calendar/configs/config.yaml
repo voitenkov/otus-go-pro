@@ -5,6 +5,10 @@ server:
   host: localhost
   port: 8080
 
+grpcserver:
+  host: localhost
+  port: 8081
+
 db:
   type: sql
   sql:

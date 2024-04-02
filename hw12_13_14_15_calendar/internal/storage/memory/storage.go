@@ -22,6 +22,14 @@ var (
 	errEventNotFound = errors.New("event not found")
 )
 
+func (s *Storage) Connect() error {
+	return nil
+}
+
+func (s *Storage) Close() error {
+	return nil
+}
+
 func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) error {
 	_ = context.WithoutCancel(ctx)
 	s.mu.Lock()

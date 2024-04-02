@@ -2,14 +2,21 @@ package internalhttp
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"io"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/mux"
+
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/config"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/storage"
 )
+
+var ErrUserIDHeader = errors.New("error getting userid from header ")
 
 type Server struct {
 	host   string
@@ -46,7 +53,46 @@ type EventRequest struct {
 	NotifyBefore int               `json:"notifyBefore"`
 }
 
+func (er *EventRequest) UnmarshalJSON(data []byte) (err error) {
+	var startTime, finishTime time.Time
+	var tmp struct {
+		Title        string
+		Description  string
+		StartTime    string
+		FinishTime   string
+		NotifyBefore int
+	}
+	if err = json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	er.Title = tmp.Title
+	er.Description = tmp.Description
+	er.NotifyBefore = tmp.NotifyBefore
+	startTime, err = time.Parse(time.DateTime, tmp.StartTime)
+	if err != nil {
+		return err
+	}
+
+	er.StartTime = storage.EventTime(startTime)
+	finishTime, err = time.Parse(time.DateTime, tmp.FinishTime)
+	if err != nil {
+		return err
+	}
+
+	er.FinishTime = storage.EventTime(finishTime)
+	er.NotifyBefore = tmp.NotifyBefore
+	return err
+}
+
+type ServerResponse struct {
+	Status  int
+	Message string
+}
+
 type UserID string
+
+type listEventsFunc func(context.Context, uuid.UUID, storage.EventDate) ([]storage.Event, error)
 
 func NewServer(logger Logger, app Application, cfg *config.Config) *Server {
 	return &Server{
@@ -58,21 +104,22 @@ func NewServer(logger Logger, app Application, cfg *config.Config) *Server {
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	userID, err := uuid.NewV4()
-	if err != nil {
-		return err
-	}
-
 	addr := net.JoinHostPort(s.host, s.port)
-	helloWorldHandlerFunc := http.HandlerFunc(s.HelloWorld)
-	injectUserIDHandler := injectUserID(helloWorldHandlerFunc, userID.String())
-	handler := s.loggingMiddleware(injectUserIDHandler)
-	http.Handle("GET /hello/", handler)
+	router := mux.NewRouter()
+	router.HandleFunc("/hello", s.helloWorldHandler)
+	router.HandleFunc("/events", s.createEventHandler).Methods("POST")
+	router.HandleFunc("/events/{ID}", s.updateEventHandler).Methods("PUT")
+	router.HandleFunc("/events/{ID}", s.deleteEventHandler).Methods("DELETE")
+	router.HandleFunc("/events/bydate", s.listEventsByDateHandler).Methods("GET")
+	router.HandleFunc("/events/byweek", s.listEventsByWeekHandler).Methods("GET")
+	router.HandleFunc("/events/bymonth", s.listEventsByMonthHandler).Methods("GET")
+	router.Use(s.loggingMiddleware)
 
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           handler,
+		Handler:           router,
 		ReadHeaderTimeout: time.Second * 5,
+		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
 	s.server = server
@@ -95,7 +142,7 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 // Hello world handler.
-func (s *Server) HelloWorld(w http.ResponseWriter, r *http.Request) {
+func (s *Server) helloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	userID := ""
 	key := UserID("userID")
 	if m := r.Context().Value(key); m != nil {
@@ -105,12 +152,183 @@ func (s *Server) HelloWorld(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello, world, from UserID " + userID))
 }
 
-func injectUserID(next http.Handler, userID string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), UserID("userID"), userID)
-		req := r.WithContext(ctx)
-		next.ServeHTTP(w, req)
-	})
+// Create event handler.
+func (s *Server) createEventHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := s.getUserID(w, r)
+	if err != nil {
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to read request body", w)
+		return
+	}
+	defer r.Body.Close()
+
+	data := EventRequest{}
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to unmarshal request body", w)
+		return
+	}
+
+	err = s.app.CreateEvent(r.Context(), userID, data.Title, data.Description, data.StartTime, data.FinishTime,
+		data.NotifyBefore)
+	if err != nil {
+		s.writeResponse(http.StatusInternalServerError, err.Error(), w)
+		s.logger.Error(err)
+		return
+	}
+
+	s.writeResponse(http.StatusOK, "event was created", w)
 }
 
-// TODO
+// Update event handler.
+func (s *Server) updateEventHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := s.getUserID(w, r)
+	if err != nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, err := uuid.FromString(vars["ID"])
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to parse id path parameter", w)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to read request body", w)
+		return
+	}
+	defer r.Body.Close()
+
+	data := &EventRequest{}
+	err = json.Unmarshal(body, data)
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to unmarshal request body", w)
+		return
+	}
+
+	err = s.app.UpdateEvent(r.Context(), id, userID, data.Title, data.Description, data.StartTime,
+		data.FinishTime, data.NotifyBefore)
+	if err != nil {
+		s.writeResponse(http.StatusInternalServerError, err.Error(), w)
+		s.logger.Error(err)
+		return
+	}
+
+	s.writeResponse(http.StatusOK, "event was updated", w)
+}
+
+// Delete event handler.
+func (s *Server) deleteEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := uuid.FromString(vars["ID"])
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to parse id path parameter", w)
+		return
+	}
+
+	err = s.app.DeleteEvent(r.Context(), id)
+	if err != nil {
+		s.writeResponse(http.StatusInternalServerError, err.Error(), w)
+		s.logger.Error(err)
+		return
+	}
+
+	s.writeResponse(http.StatusOK, "event was deleted", w)
+}
+
+// List events by date handler.
+func (s *Server) listEventsByDateHandler(w http.ResponseWriter, r *http.Request) {
+	s.listEventsUntyped(s.app.ListEventsByDate, w, r)
+}
+
+// List events by week handler.
+func (s *Server) listEventsByWeekHandler(w http.ResponseWriter, r *http.Request) {
+	s.listEventsUntyped(s.app.ListEventsByWeek, w, r)
+}
+
+// List events by month handler.
+func (s *Server) listEventsByMonthHandler(w http.ResponseWriter, r *http.Request) {
+	s.listEventsUntyped(s.app.ListEventsByMonth, w, r)
+}
+
+func (s *Server) listEventsUntyped(fn listEventsFunc, w http.ResponseWriter, r *http.Request) {
+	userID, err := s.getUserID(w, r)
+	if err != nil {
+		return
+	}
+
+	query := r.URL.Query()
+	startDate := query.Get("start_date")
+	dateParsed, err := time.Parse(time.DateOnly, startDate)
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to parse start_date query parameter", w)
+		return
+	}
+
+	events, err := fn(r.Context(), userID, storage.EventDate(dateParsed))
+	if err != nil {
+		s.writeResponse(http.StatusInternalServerError, "internal server error", w)
+		s.logger.Error(err)
+		return
+	}
+
+	res, err := json.Marshal(events)
+	if err != nil {
+		s.writeResponse(http.StatusInternalServerError, "internal server error", w)
+		s.logger.Error(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(res)
+	if err != nil {
+		s.writeResponse(http.StatusInternalServerError, "internal server error", w)
+		s.logger.Error(err)
+	}
+}
+
+func (s *Server) writeResponse(status int, message string, w http.ResponseWriter) {
+	res, err := json.Marshal(ServerResponse{
+		Status:  status,
+		Message: message,
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		s.logger.Error(err)
+	}
+
+	w.WriteHeader(status)
+
+	_, err = w.Write(res)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		s.logger.Error(err)
+	}
+}
+
+func (s *Server) getUserID(w http.ResponseWriter, r *http.Request) (userID uuid.UUID, err error) {
+	userIDSlice, found := r.Header["X-User-Id"]
+	if !found {
+		s.writeResponse(http.StatusBadRequest, "x-user-id header is not provided", w)
+		return userID, ErrUserIDHeader
+	}
+
+	if len(userIDSlice) == 0 {
+		s.writeResponse(http.StatusBadRequest, "x-user-id header is empty", w)
+		return userID, ErrUserIDHeader
+	}
+
+	userID, err = uuid.FromString(userIDSlice[0])
+	if err != nil {
+		s.writeResponse(http.StatusBadRequest, "failed to parse x-user-id header", w)
+		return userID, ErrUserIDHeader
+	}
+
+	return userID, nil
+}

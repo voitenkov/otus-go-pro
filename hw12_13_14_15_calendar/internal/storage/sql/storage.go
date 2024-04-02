@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	_ "github.com/jackc/pgx/stdlib" // no lint
 	"github.com/jmoiron/sqlx"
+
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/config"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/storage"
 )
@@ -19,12 +21,13 @@ type Storage struct {
 }
 
 func (s *Storage) Connect() error {
-	db, err := sqlx.Open("pgx", s.dsn)
+	var err error
+	s.db, err = sqlx.Open("pgx", s.dsn)
 	if err != nil {
 		return fmt.Errorf("connection error: %w", err)
 	}
 
-	s.db = db
+	// s.db = db
 	return nil
 }
 
@@ -33,9 +36,8 @@ func (s *Storage) Close() error {
 }
 
 func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) error {
-	query := `insert
-				into events(id, user_id, title, description, start_time, finish_time, notify_before)
-				values($1, $2, $3, $4, $5, $6, $7)`
+	query := `insert into events(id, user_id, title, description, start_time, finish_time, notify_before) 
+	          values($1, $2, $3, $4, $5, $6, $7)`
 	// strconv.FormatInt(int64(time.Duration(event.Duration)), 10),
 	_, err := s.db.ExecContext(
 		ctx,
@@ -63,7 +65,7 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 				description = $4,
 				start_time = $5,
 				finish_time = $6,
-				notify_before = $7)
+				notify_before = $7
 			  where
 			    id = $1`
 
@@ -129,8 +131,8 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 			    events
 			  where
 			  	(user_id = $1 and start_time < $3 and finish_time > $2)`
-
-	rows, err := s.db.QueryxContext(ctx, query, userID, startDate, finishDate)
+	rows, err := s.db.QueryxContext(ctx, query, userID, time.Time(startDate).Format(time.RFC3339),
+		time.Time(finishDate).Format(time.RFC3339))
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +140,8 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 
 	for rows.Next() {
 		var event storage.Event
-		err := rows.StructScan(&event)
+		err := rows.Scan(&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartTime,
+			&event.FinishTime, &event.NotifyBefore)
 		if err != nil {
 			return nil, err
 		}

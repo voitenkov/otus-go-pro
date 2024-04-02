@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Logger LoggerConf
-	DB     DBConf
-	Server ServerConf
+	Logger     LoggerConf
+	DB         DBConf
+	Server     ServerConf
+	GRPCServer GRPCServerConf
 }
 
 type LoggerConf struct {
@@ -27,6 +28,11 @@ type DBConf struct {
 }
 
 type ServerConf struct {
+	Host string
+	Port string
+}
+
+type GRPCServerConf struct {
 	Host string
 	Port string
 }

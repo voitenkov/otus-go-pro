@@ -8,6 +8,9 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
+generate:
+	go generate ./...
+
 run: build
 	$(BIN) -config ./configs/config.yaml
 
@@ -38,4 +41,4 @@ build-migrations:
 run-migrations: build-migrations
 	$(BIN_MIGRATION) -config ./configs/config.yaml
 
-.PHONY: build run build-img run-img version test lint build-migrations run-migrations
+.PHONY: build generate run build-img run-img version test lint build-migrations run-migrations

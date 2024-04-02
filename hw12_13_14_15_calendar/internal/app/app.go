@@ -21,6 +21,8 @@ type Storage interface {
 		finishDate storage.EventDate) ([]storage.Event, error)
 	UpdateEvent(ctx context.Context, event storage.Event) error
 	DeleteEvent(ctx context.Context, ID uuid.UUID) error
+	Connect() error
+	Close() error
 }
 
 func (a *App) CreateEvent(ctx context.Context, userID uuid.UUID, title, description string, startTime,
