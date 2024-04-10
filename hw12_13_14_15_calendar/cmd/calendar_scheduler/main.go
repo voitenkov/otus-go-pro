@@ -54,8 +54,10 @@ func main() {
 	storage.Connect()
 	queue, err := queue.New(cfg)
 	if err != nil {
+		storage.Close()
 		log.Fatal(err)
 	}
+	defer storage.Close()
 
 	calendar := app.New(storage)
 	scheduler := scheduler.New(logg, calendar, queue, cfg)

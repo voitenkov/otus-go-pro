@@ -47,9 +47,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if cfg.DB.Type == "sql" {
-		storage.Connect()
-	}
+	storage.Connect()
+	defer storage.Close()
+
 	calendar := app.New(storage)
 
 	server := internalhttp.NewServer(logg, calendar, cfg)
