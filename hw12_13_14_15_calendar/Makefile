@@ -1,5 +1,7 @@
 BIN := "./bin/calendar"
 DOCKER_IMG="calendar:develop"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_SENDER := "./bin/calendar_sender"
 BIN_MIGRATION := "./bin/migration"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -8,11 +10,23 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
+build-sched:
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler	
+
+build-sender:
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
+
 generate:
 	go generate ./...
 
 run: build
-	$(BIN) -config ./configs/config.yaml
+	$(BIN) -config ./configs/calendar_config.yaml
+
+run-sched: build-sched
+	$(BIN_SCHEDULER) -config ./configs/scheduler_config.yaml
+
+run-sender: build-sender
+	$(BIN_SENDER) -config ./configs/sender_config.yaml
 
 build-img:
 	docker build \
@@ -39,6 +53,6 @@ build-migrations:
 	go build -v -o $(BIN_MIGRATION) ./cmd/migration
 
 run-migrations: build-migrations
-	$(BIN_MIGRATION) -config ./configs/config.yaml
+	$(BIN_MIGRATION) -config ./configs/calendar_config.yaml
 
-.PHONY: build generate run build-img run-img version test lint build-migrations run-migrations
+.PHONY: build build-sched build-sender generate run run-sched run-sender build-img run-img version test lint build-migrations run-migrations

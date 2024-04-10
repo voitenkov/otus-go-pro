@@ -116,6 +116,17 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 	return result, nil
 }
 
+func (s *Storage) SelectEventsToNotify(ctx context.Context) ([]storage.Event, error) {
+	_ = context.WithoutCancel(ctx)
+	return []storage.Event{}, nil
+}
+
+func (s *Storage) PurgeEvents(ctx context.Context, purgeIntervalDays int) (purgedEvents int64, err error) {
+	_ = context.WithoutCancel(ctx)
+	_ = purgeIntervalDays
+	return 0, nil
+}
+
 func New() *Storage {
 	return &Storage{
 		events: make(Events, 0),

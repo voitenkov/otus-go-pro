@@ -40,5 +40,6 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.9.0
 	golang.org/x/sys v0.18.0 // indirect
 )

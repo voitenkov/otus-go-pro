@@ -72,7 +72,6 @@ func main() {
 	}()
 
 	logg.Info("calendar is running...")
-
 	wg = &sync.WaitGroup{}
 
 	wg.Add(1)

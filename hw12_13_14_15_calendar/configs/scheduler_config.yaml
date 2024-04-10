@@ -1,0 +1,24 @@
+logger:
+  level: info
+
+db:
+  type: sql
+  sql:
+    driver: pgx
+    name: calendar
+    user: otus_user
+    password: otus_password
+    host: 127.0.0.1
+    port: 5432
+
+queue:
+  type: rmq
+  rmq:
+    name: notifications
+    user: guest
+    password: guest
+    host: 127.0.0.1
+    port: 5672    
+
+scheduler:
+  purgeIntervalDays: 365

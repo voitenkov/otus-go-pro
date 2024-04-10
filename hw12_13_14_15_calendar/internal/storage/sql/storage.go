@@ -36,8 +36,9 @@ func (s *Storage) Close() error {
 }
 
 func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) error {
-	query := `insert into events(id, user_id, title, description, start_time, finish_time, notify_before) 
-	          values($1, $2, $3, $4, $5, $6, $7)`
+	query := `insert into events(id, user_id, title, description, start_time, finish_time, notify_before, 
+		        notification_sent) 
+	          values($1, $2, $3, $4, $5, $6, $7, $8)`
 	// strconv.FormatInt(int64(time.Duration(event.Duration)), 10),
 	_, err := s.db.ExecContext(
 		ctx,
@@ -48,7 +49,8 @@ func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) error {
 		event.Description,
 		time.Time(event.StartTime).Format(time.RFC3339),
 		time.Time(event.FinishTime).Format(time.RFC3339),
-		strconv.Itoa(event.NotifyBefore))
+		strconv.Itoa(event.NotifyBefore),
+		false)
 	if err != nil {
 		return err
 	}
@@ -65,7 +67,8 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 				description = $4,
 				start_time = $5,
 				finish_time = $6,
-				notify_before = $7
+				notify_before = $7,
+				notification_sent = $8
 			  where
 			    id = $1`
 
@@ -78,7 +81,8 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 		event.Description,
 		time.Time(event.StartTime).Format(time.RFC3339),
 		time.Time(event.FinishTime).Format(time.RFC3339),
-		event.NotifyBefore)
+		event.NotifyBefore,
+		event.NotificationSent)
 	if err != nil {
 		return err
 	}
@@ -126,11 +130,12 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 				description,
 				start_time,
 				finish_time,
-				notify_before
+				notify_before,
+				notification_sent
 			  from
 			    events
 			  where
-			  	(user_id = $1 and start_time < $3 and finish_time > $2)`
+			  	user_id = $1 and start_time < $3 and finish_time > $2`
 	rows, err := s.db.QueryxContext(ctx, query, userID, time.Time(startDate).Format(time.RFC3339),
 		time.Time(finishDate).Format(time.RFC3339))
 	if err != nil {
@@ -141,7 +146,7 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 	for rows.Next() {
 		var event storage.Event
 		err := rows.Scan(&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartTime,
-			&event.FinishTime, &event.NotifyBefore)
+			&event.FinishTime, &event.NotifyBefore, &event.NotificationSent)
 		if err != nil {
 			return nil, err
 		}
@@ -154,6 +159,61 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 	}
 
 	return result, nil
+}
+
+func (s *Storage) SelectEventsToNotify(ctx context.Context) ([]storage.Event, error) {
+	result := make([]storage.Event, 0)
+
+	query := `select
+				id,
+				user_id,
+				title,
+				description,
+				start_time,
+				finish_time,
+				notify_before,
+				notification_sent
+			  from
+			    events
+			  where
+			    notification_sent is not true and start_time <= now() + interval '1 minute' * notify_before`
+	rows, err := s.db.QueryxContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event storage.Event
+		err := rows.Scan(&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartTime,
+			&event.FinishTime, &event.NotifyBefore, &event.NotificationSent)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Storage) PurgeEvents(ctx context.Context, purgeIntervalDays int) (purgedEvents int64, err error) {
+	query := "delete from events where finish_time < now() - interval '1 day' * $1"
+	result, err := s.db.ExecContext(ctx, query, purgeIntervalDays)
+	if err != nil {
+		return 0, err
+	}
+
+	purgedEvents, err = result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return purgedEvents, nil
 }
 
 func New(config *config.Config, dsn string) *Storage {

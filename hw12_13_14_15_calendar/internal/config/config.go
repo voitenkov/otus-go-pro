@@ -14,8 +14,10 @@ import (
 type Config struct {
 	Logger     LoggerConf
 	DB         DBConf
+	Queue      QueueConf
 	Server     ServerConf
 	GRPCServer GRPCServerConf
+	Scheduler  SchedulerConf
 }
 
 type LoggerConf struct {
@@ -25,6 +27,11 @@ type LoggerConf struct {
 type DBConf struct {
 	Type string // "memory", "sql"
 	SQL  SQLConf
+}
+
+type QueueConf struct {
+	Type string // "rmq" only
+	RMQ  RMQConf
 }
 
 type ServerConf struct {
@@ -44,6 +51,18 @@ type SQLConf struct {
 	Password string
 	Host     string
 	Port     string
+}
+
+type RMQConf struct {
+	Name     string
+	User     string
+	Password string
+	Host     string
+	Port     string
+}
+
+type SchedulerConf struct {
+	PurgeIntervalDays int `yaml:"purgeIntervalDays"`
 }
 
 func NewConfig() *Config {
