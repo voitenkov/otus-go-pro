@@ -7,19 +7,24 @@ BIN_MIGRATION := "./bin/migration"
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
-build:
+build-calendar:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 build-sched:
-	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler	
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
 
 build-sender:
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
+
+build:
+	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
 	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 generate:
 	go generate ./...
 
-run: build
+run-calend: build
 	$(BIN) -config ./configs/calendar_config.yaml
 
 run-sched: build-sched
@@ -55,4 +60,4 @@ build-migrations:
 run-migrations: build-migrations
 	$(BIN_MIGRATION) -config ./configs/calendar_config.yaml
 
-.PHONY: build build-sched build-sender generate run run-sched run-sender build-img run-img version test lint build-migrations run-migrations
+.PHONY: build build-calendar build-sched build-sender generate run-calendar run-sched run-sender build-img run-img version test lint build-migrations run-migrations
