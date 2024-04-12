@@ -1,1 +1,88 @@
-version: "3"
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16.2
+    environment:
+      POSTGRES_DB: "calendar"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "otus_password"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - calendar
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rmqdata:/var/lib/rabbitmq/
+      - rmqlog:/var/log/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - calendar
+
+  migration:
+    build:
+      context: ../build/migration
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - calendar
+
+  calendar:
+    build:
+      context: ../build/calendar
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - migration
+      - postgres
+      - rabbitmq
+    networks:
+      - calendar
+
+  scheduler:
+    build:
+      context: ../build/scheduler
+    restart: always
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - calendar
+
+  sender:
+    build:
+      context: ../build/sender
+    restart: always
+    depends_on:
+      - rabbitmq
+    networks:
+      - calendar
+
+volumes:
+  pgdata:
+  rmqdata:
+  rmqlog:
+
+networks:
+  calendar:

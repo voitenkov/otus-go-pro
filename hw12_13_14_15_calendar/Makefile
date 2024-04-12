@@ -24,7 +24,7 @@ build:
 generate:
 	go generate ./...
 
-run-calend: build
+run-calend: build-calendar
 	$(BIN) -config ./configs/calendar_config.yaml
 
 run-sched: build-sched
