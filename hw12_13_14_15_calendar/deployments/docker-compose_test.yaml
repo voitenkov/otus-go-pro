@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  calendar-test:
+    build:
+      context: ../
+      dockerfile: build/calendar_test/Dockerfile
+    container_name: calendar-test
+    hostname: calendar-test
+    restart: always
+    networks:
+      - calendar
+
+  run-test:
+    build:
+      context: ../
+      dockerfile: build/run-test/Dockerfile
+    depends_on:
+      - calendar-test
+    networks:
+      - calendar
+
+networks:
+  calendar:

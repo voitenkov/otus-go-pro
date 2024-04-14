@@ -2,11 +2,11 @@ logger:
   level: info
 
 server:
-  host: localhost
+  host: calendar
   port: 8080
 
 grpcserver:
-  host: localhost
+  host: calendar
   port: 8081
 
 db:
@@ -15,6 +15,6 @@ db:
     driver: pgx
     name: calendar
     user: postgres
-    password: otus_password
-    host: 127.0.0.1
+    password: postgres
+    host: postgres
     port: 5432

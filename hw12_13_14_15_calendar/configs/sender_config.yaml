@@ -7,5 +7,5 @@ queue:
     name: notifications
     user: guest
     password: guest
-    host: 127.0.0.1
+    host: rabbitmq
     port: 5672
