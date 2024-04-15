@@ -10,5 +10,12 @@ grpcserver:
   port: 8091
 
 db:
-  type: memory
+  type: sql
+  sql:
+    driver: pgx
+    name: calendar
+    user: postgres
+    password: postgres
+    host: postgres
+    port: 5432
 

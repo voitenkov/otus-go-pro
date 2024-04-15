@@ -10,10 +10,12 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/app"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/config"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/logger"
 	queue "github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/queue/init"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/sender"
+	storage "github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/storage/init"
 )
 
 var (
@@ -39,13 +41,23 @@ func main() {
 	}
 
 	logg := logger.New(cfg.Logger.Level)
+	storage, err := storage.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	if cfg.DB.Type != "sql" {
+		log.Fatal("unsupported db type selected, sql is to be used")
+	}
+
+	storage.Connect()
 	queue, err := queue.New(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	sender := sender.New(logg, queue)
+	calendar := app.New(storage)
+	sender := sender.New(logg, calendar, queue)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()

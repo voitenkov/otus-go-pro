@@ -41,7 +41,6 @@ func main() {
 	}
 
 	logg := logger.New(cfg.Logger.Level)
-
 	storage, err := storage.New(cfg)
 	if err != nil {
 		log.Fatal(err)

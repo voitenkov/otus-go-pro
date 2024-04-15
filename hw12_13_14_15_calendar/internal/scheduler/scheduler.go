@@ -88,17 +88,8 @@ func (s *Scheduler) selectEventsToNotify(ctx context.Context) {
 	}
 
 	s.logger.Infof("select events to notify: %v events selected", len(events))
-	eventsOut, err := s.queue.PublishNotifications(ctx, events)
+	_, err = s.queue.PublishNotifications(ctx, events)
 	if err != nil {
 		s.logger.Error(err)
-	}
-
-	for _, event := range eventsOut {
-		err := s.app.UpdateEvent(ctx, event.ID, event.UserID, event.Title, event.Description, event.StartTime,
-			event.FinishTime, event.NotifyBefore, event.NotificationSent)
-		if err != nil {
-			s.logger.Error(err)
-			return
-		}
 	}
 }

@@ -143,6 +143,7 @@ func (s *HttpTestSuite) TestFull() {
 	s.Equal("2024-01-02 15:00:00", time.Time(events[0].StartTime).Format(time.DateTime))
 	s.Equal("2024-01-02 16:00:00", time.Time(events[0].FinishTime).Format(time.DateTime))
 	s.Equal(30, events[0].NotifyBefore)
+	s.False(events[0].NotificationSent) // check if notification was NOT sent
 
 	// Update event test.
 	s.event.Title = "Wedding"
@@ -160,6 +161,8 @@ func (s *HttpTestSuite) TestFull() {
 	s.Equal(http.StatusOK, response.StatusCode)
 	s.Equal(`{"Status":200,"Message":"event was updated"}`, s.respBody(response))
 
+	time.Sleep(time.Minute)
+
 	// List events by month (after update) test.
 	response = s.request(ctx, http.MethodGet, "events/bymonth?start_date=2024-01-02", bytes.NewReader(reqBody))
 	s.Equal(http.StatusOK, response.StatusCode)
@@ -176,6 +179,7 @@ func (s *HttpTestSuite) TestFull() {
 	s.Equal("2024-02-01 15:00:00", time.Time(events[0].StartTime).Format(time.DateTime))
 	s.Equal("2024-02-01 16:00:00", time.Time(events[0].FinishTime).Format(time.DateTime))
 	s.Equal(60, events[0].NotifyBefore)
+	s.True(events[0].NotificationSent) // check if notification was sent
 
 	// Delete event test.
 	response = s.request(ctx, http.MethodDelete, "events/"+eventID, nil)

@@ -6,7 +6,7 @@ import (
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/storage"
 )
 
-type CallbackFunc func([]byte)
+type CallbackFunc func(context.Context, []byte)
 
 type QueueApp struct {
 	queue Queue
