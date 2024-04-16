@@ -1,0 +1,20 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: migration
+  labels:
+    app: migration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: migration
+  template:
+    metadata:
+      labels:
+        app: migration
+    spec:
+      containers:
+      - name: migration
+        image: voitenkov/migration:latest

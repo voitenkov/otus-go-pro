@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: calendar-http
+            port:
+              number: 8080
+  - http:
+      paths:
+      - path: /grpc
+        pathType: Prefix
+        backend:
+          service:
+            name: calendar-grpc
+            port:
+              number: 8081
