@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package tests
 
 import (
@@ -22,7 +19,7 @@ import (
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/storage"
 )
 
-type HttpTestSuite struct {
+type HTTPTestSuite struct {
 	suite.Suite
 	host  string
 	port  string
@@ -38,14 +35,14 @@ var (
 const userID = "14e4a342-2ad9-4e1f-bd83-eff99332a49f"
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/calendar_config_test.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "../configs/calendar_config_test.yaml", "Path to configuration file")
 }
 
-func TestHttpTestSuite(t *testing.T) {
-	suite.Run(t, &HttpTestSuite{})
+func TestHTTPTestSuite(t *testing.T) {
+	suite.Run(t, &HTTPTestSuite{})
 }
 
-func (s *HttpTestSuite) SetupSuite() {
+func (s *HTTPTestSuite) SetupSuite() {
 	flag.Parse()
 
 	cfg, err := config.Parse(configFile)
@@ -58,7 +55,7 @@ func (s *HttpTestSuite) SetupSuite() {
 	ctx = context.Background()
 }
 
-func (s *HttpTestSuite) SetupTest() {
+func (s *HTTPTestSuite) SetupTest() {
 	startTime, err := time.Parse(time.DateTime, "2024-01-02 15:00:00")
 	s.NoError(err)
 	finishTime, err := time.Parse(time.DateTime, "2024-01-02 16:00:00")
@@ -73,11 +70,11 @@ func (s *HttpTestSuite) SetupTest() {
 	}
 }
 
-func (s *HttpTestSuite) TearDownTest() {
+func (s *HTTPTestSuite) TearDownTest() {
 	s.event = nil
 }
 
-func (s *HttpTestSuite) request(ctx context.Context, method, path string, body io.Reader) *http.Response {
+func (s *HTTPTestSuite) request(ctx context.Context, method, path string, body io.Reader) *http.Response {
 	client := http.Client{
 		Timeout: 30 * time.Second,
 	}
@@ -90,7 +87,7 @@ func (s *HttpTestSuite) request(ctx context.Context, method, path string, body i
 	return response
 }
 
-func (s *HttpTestSuite) respBody(response *http.Response) string {
+func (s *HTTPTestSuite) respBody(response *http.Response) string {
 	respBody, err := io.ReadAll(response.Body)
 	s.NoError(err)
 	respBodyJSON := string(respBody)
@@ -98,19 +95,20 @@ func (s *HttpTestSuite) respBody(response *http.Response) string {
 	return respBodyJSON
 }
 
-func (s *HttpTestSuite) TestCreateEmptyBody() {
+func (s *HTTPTestSuite) TestCreateEmptyBody() {
 	response := s.request(ctx, http.MethodPost, "events", nil)
 	s.Equal(http.StatusBadRequest, response.StatusCode)
 	s.Equal(`{"Status":400,"Message":"failed to unmarshal request body"}`, s.respBody(response))
 }
 
-func (s *HttpTestSuite) TestNoUserID() {
+func (s *HTTPTestSuite) TestNoUserID() {
 	reqBody, err := json.Marshal(s.event)
 	s.NoError(err)
 	client := http.Client{
 		Timeout: 30 * time.Second,
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("http://%s:%s/events", s.host, s.port), bytes.NewReader(reqBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("http://%s:%s/events", s.host,
+		s.port), bytes.NewReader(reqBody))
 	s.NoError(err)
 	response, err := client.Do(req)
 	s.NoError(err)
@@ -118,7 +116,7 @@ func (s *HttpTestSuite) TestNoUserID() {
 	s.Equal(`{"Status":400,"Message":"x-user-id header is not provided"}`, s.respBody(response))
 }
 
-func (s *HttpTestSuite) TestFull() {
+func (s *HTTPTestSuite) TestFull() {
 	reqBody, err := json.Marshal(s.event)
 	s.NoError(err)
 
@@ -160,8 +158,9 @@ func (s *HttpTestSuite) TestFull() {
 	response = s.request(ctx, http.MethodPut, "events/"+eventID, bytes.NewReader(reqBody))
 	s.Equal(http.StatusOK, response.StatusCode)
 	s.Equal(`{"Status":200,"Message":"event was updated"}`, s.respBody(response))
-
+	fmt.Println("...sleeping 1 minute to wait the notification to be sent and the event to be marked by sender...")
 	time.Sleep(time.Minute)
+	fmt.Println("...waked up...")
 
 	// List events by month (after update) test.
 	response = s.request(ctx, http.MethodGet, "events/bymonth?start_date=2024-01-02", bytes.NewReader(reqBody))

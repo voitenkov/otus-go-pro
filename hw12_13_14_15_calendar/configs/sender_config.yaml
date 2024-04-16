@@ -1,6 +1,16 @@
 logger:
   level: info
 
+db:
+  type: sql
+  sql:
+    driver: pgx
+    name: calendar
+    user: postgres
+    password: postgres
+    host: postgres
+    port: 5432
+
 queue:
   type: rmq
   rmq:

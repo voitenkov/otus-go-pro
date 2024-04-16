@@ -114,65 +114,71 @@ func (s *Storage) PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUI
 
 	defer rows.Close()
 
-	err = rows.Scan(&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartTime,
-		&event.FinishTime, &event.NotifyBefore, &event.NotificationSent)
-	if err != nil {
-		return err
+	for rows.Next() {
+		err = rows.Scan(&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartTime,
+			&event.FinishTime, &event.NotifyBefore, &event.NotificationSent)
+		if err != nil {
+			return err
+		}
+
+		if userID != nil {
+			event.UserID = *userID
+		}
+
+		if title != nil {
+			event.Title = *title
+		}
+
+		if description != nil {
+			event.Description = *description
+		}
+
+		if startTime != nil {
+			event.StartTime = *startTime
+		}
+
+		if finishTime != nil {
+			event.FinishTime = *finishTime
+		}
+
+		if notifyBefore != nil {
+			event.NotifyBefore = *notifyBefore
+		}
+
+		if notificationSent != nil {
+			event.NotificationSent = *notificationSent
+		}
+
+		query = `update
+				events
+			set
+				user_id = $2,
+				title = $3,
+				description = $4,
+				start_time = $5,
+				finish_time = $6,
+				notify_before = $7,
+				notification_sent = $8
+			where
+				id = $1`
+
+		_, err = s.db.ExecContext(
+			ctx,
+			query,
+			event.ID.String(),
+			event.UserID.String(),
+			event.Title,
+			event.Description,
+			time.Time(event.StartTime).Format(time.RFC3339),
+			time.Time(event.FinishTime).Format(time.RFC3339),
+			event.NotifyBefore,
+			event.NotificationSent)
+		if err != nil {
+			return err
+		}
 	}
 
-	if userID != nil {
-		event.UserID = *userID
-	}
-
-	if title != nil {
-		event.Title = *title
-	}
-
-	if description != nil {
-		event.Description = *description
-	}
-
-	if startTime != nil {
-		event.StartTime = *startTime
-	}
-
-	if finishTime != nil {
-		event.FinishTime = *finishTime
-	}
-
-	if notifyBefore != nil {
-		event.NotifyBefore = *notifyBefore
-	}
-
-	if notificationSent != nil {
-		event.NotificationSent = *notificationSent
-	}
-
-	query = `update
-			events
-		set
-			user_id = $2,
-			title = $3,
-			description = $4,
-			start_time = $5,
-			finish_time = $6,
-			notify_before = $7,
-			notification_sent = $8
-		where
-			id = $1`
-
-	_, err = s.db.ExecContext(
-		ctx,
-		query,
-		event.ID.String(),
-		event.UserID.String(),
-		event.Title,
-		event.Description,
-		time.Time(event.StartTime).Format(time.RFC3339),
-		time.Time(event.FinishTime).Format(time.RFC3339),
-		event.NotifyBefore,
-		event.NotificationSent)
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		return err
 	}
 
