@@ -8,7 +8,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - http:
+  - host: minikube
+    http:
       paths:
       - path: /api
         pathType: Prefix
@@ -17,7 +18,8 @@ spec:
             name: calendar-http
             port:
               number: {{ .Values.calendar.http.port }}
-  - http:
+  - host: minikube
+    http:
       paths:
       - path: /grpc
         pathType: Prefix
