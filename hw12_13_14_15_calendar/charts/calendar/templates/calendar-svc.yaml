@@ -8,10 +8,10 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: 8080
-      nodePort: 30080
+    - port: {{ .Values.calendar.http.port }}
+      nodePort: {{ .Values.calendar.http.nodePort }}
       protocol: TCP
-      targetPort: 8080
+      targetPort: {{ .Values.calendar.http.port }}
   selector:
     app: calendar
 ---
@@ -24,10 +24,10 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: 8081
-      nodePort: 30081
+    - port: {{ .Values.calendar.grpc.port }}
+      nodePort: {{ .Values.calendar.grpc.nodePort }}
       protocol: TCP
-      targetPort: 8081
+      targetPort: {{ .Values.calendar.grpc.port }}
   selector:
     app: calendar
 ---
@@ -39,13 +39,13 @@ metadata:
      app: calendar
 spec:
   ports:
-    - port: 8080
+    - port: {{ .Values.calendar.http.port }}
       name: http
       protocol: TCP
-      targetPort: 8080
-    - port: 8081
+      targetPort: {{ .Values.calendar.http.port }}
+    - port: {{ .Values.calendar.grpc.port }}
       name: grpc
       protocol: TCP
-      targetPort: 8081
+      targetPort: {{ .Values.calendar.grpc.port }}
   selector:
     app: calendar

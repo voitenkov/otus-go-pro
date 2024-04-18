@@ -45,12 +45,24 @@ run-sender: build-sender
 build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-f build/calendar/Dockerfile \
+		--tag voitenkov/calendar:0.0.2 \
+		--tag voitenkov/calendar:latest \
+		.
 
 .PHONY: run-img
 run-img: build-img
 	docker run $(DOCKER_IMG)
+
+.PHONY: build-img-migration
+build-img-migration:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG) \
+		-f build/migration/Dockerfile \
+		--tag voitenkov/migration:0.0.2 \
+		--tag voitenkov/migration:latest \
+		.
 
 .PHONY: version
 version: build

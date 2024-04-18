@@ -17,12 +17,12 @@ spec:
     spec:
       initContainers:
       - name: migration
-        image: voitenkov/migration:latest
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
       containers:
       - name: calendar
-        image: voitenkov/calendar:latest
+        image: "{{ .Values.calendar.image.repository }}:{{ .Values.calendar.image.tag }}"
         ports:
         - name: http
-          containerPort: 8080
+          containerPort: {{ .Values.calendar.http.port }}
         - name: grpc
-          containerPort: 8081
+          containerPort: {{ .Values.calendar.grpc.port }}

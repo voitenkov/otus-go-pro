@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: rabbitmq
-        image: rabbitmq:latest
+        image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
         ports:
           - name: http
             protocol: TCP

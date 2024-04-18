@@ -2,11 +2,11 @@ logger:
   level: info
 
 server:
-  host: calendar
+  host: localhost
   port: 8080
 
 grpcserver:
-  host: calendar
+  host: localhost
   port: 8081
 
 db:
