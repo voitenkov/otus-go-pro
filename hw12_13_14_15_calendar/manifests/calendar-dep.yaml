@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar
+  labels:
+    app: calendar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar
+  template:
+    metadata:
+      labels:
+        app: calendar
+    spec:
+      initContainers:
+      - name: migration
+        image: voitenkov/migration:latest
+      containers:
+      - name: calendar
+        image: voitenkov/calendar:latest
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: grpc
+          containerPort: 8081
