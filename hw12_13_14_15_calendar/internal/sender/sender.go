@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/app"
 	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/queue"
+	"github.com/voitenkov/otus-go-pro/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Sender struct {
 	logger Logger
+	app    Application
 	queue  QueueApplication
 }
 
@@ -23,15 +26,21 @@ type Logger interface {
 	Debug(msg ...interface{})
 }
 
+type Application interface {
+	PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUID, title, description *string, startTime,
+		finishTime *storage.EventTime, notifyBefore *int, notificationSent *bool) error
+}
+
 type QueueApplication interface {
 	Connect() error
 	Close() error
 	ReadAndProcessNotifications(ctx context.Context, fn app.CallbackFunc) error
 }
 
-func New(logger Logger, queue QueueApplication) *Sender {
+func New(logger Logger, app Application, queue QueueApplication) *Sender {
 	return &Sender{
 		logger: logger,
+		app:    app,
 		queue:  queue,
 	}
 }
@@ -56,7 +65,7 @@ func (s *Sender) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *Sender) SendNotification(body []byte) {
+func (s *Sender) SendNotification(ctx context.Context, body []byte) {
 	notification := &queue.Notification{}
 	err := json.Unmarshal(body, notification)
 	if err != nil {
@@ -67,4 +76,11 @@ func (s *Sender) SendNotification(body []byte) {
 	startTime := time.Time(notification.StartTime).Format(time.DateTime)
 
 	s.logger.Infof("Dear user, pls be reminded on event '%v' at %v", title, startTime)
+
+	notificationSent := true
+	err = s.app.PatchEvent(ctx, notification.ID, nil, nil, nil, nil, nil, nil, &notificationSent)
+	if err != nil {
+		s.logger.Error(err)
+		return
+	}
 }

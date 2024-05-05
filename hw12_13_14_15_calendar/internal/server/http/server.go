@@ -54,6 +54,24 @@ type EventRequest struct {
 	NotifyBefore int               `json:"notifyBefore"`
 }
 
+func (er EventRequest) MarshalJSON() ([]byte, error) {
+	var tmp struct {
+		Title        string
+		Description  string
+		StartTime    string
+		FinishTime   string
+		NotifyBefore int
+	}
+
+	tmp.Title = er.Title
+	tmp.Description = er.Description
+	tmp.StartTime = time.Time(er.StartTime).Format(time.DateTime)
+	tmp.FinishTime = time.Time(er.FinishTime).Format(time.DateTime)
+	tmp.NotifyBefore = er.NotifyBefore
+	json, err := json.Marshal(tmp)
+	return json, err
+}
+
 func (er *EventRequest) UnmarshalJSON(data []byte) (err error) {
 	var startTime, finishTime time.Time
 	var tmp struct {

@@ -20,6 +20,8 @@ type Storage interface {
 	ListEventsByPeriod(ctx context.Context, userID uuid.UUID, startDate,
 		finishDate storage.EventDate) ([]storage.Event, error)
 	UpdateEvent(ctx context.Context, event storage.Event) error
+	PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUID, title, description *string, startTime,
+		finishTime *storage.EventTime, notifyBefore *int, notificationSent *bool) error
 	DeleteEvent(ctx context.Context, ID uuid.UUID) error
 	SelectEventsToNotify(ctx context.Context) ([]storage.Event, error)
 	PurgeEvents(ctx context.Context, purgeIntervalDays int) (purgedEvents int64, err error)
@@ -60,6 +62,12 @@ func (a *App) UpdateEvent(ctx context.Context, id, userID uuid.UUID, title, desc
 ) error {
 	event := buildEvent(id, userID, title, description, startTime, finishTime, notifyBefore, notificationSent)
 	return a.storage.UpdateEvent(ctx, *event)
+}
+
+func (a *App) PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUID, title, description *string, startTime,
+	finishTime *storage.EventTime, notifyBefore *int, notificationSent *bool,
+) error {
+	return a.storage.PatchEvent(ctx, id, userID, title, description, startTime, finishTime, notifyBefore, notificationSent)
 }
 
 func (a *App) DeleteEvent(ctx context.Context, id uuid.UUID) error {

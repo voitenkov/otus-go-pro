@@ -1,0 +1,39 @@
+calendar:
+  image: 
+    repository: voitenkov/calendar
+    tag: 0.0.2
+  http:
+    port: 8080
+    nodePort: 30080
+  grpc:
+    port: 8081
+    nodePort: 30081
+
+migration:
+  image: 
+    repository: voitenkov/migration
+    tag: 0.0.2
+
+scheduler:
+  image: 
+    repository: voitenkov/scheduler
+    tag: 0.0.1
+
+sender:
+  image: 
+    repository: voitenkov/sender
+    tag: 0.0.1
+
+postgres:
+  image: 
+    repository: postgres
+    tag: 14.4
+  db: calendar
+  password: postgres
+
+rabbitmq:
+  image: 
+    repository: rabbitmq
+    tag: latest
+
+

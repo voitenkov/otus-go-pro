@@ -139,7 +139,7 @@ func (q *Queue) ReadAndProcessNotifications(ctx context.Context, fn app.Callback
 
 	go func() {
 		for notification := range notifications {
-			fn(notification.Body)
+			fn(ctx, notification.Body)
 		}
 	}()
 

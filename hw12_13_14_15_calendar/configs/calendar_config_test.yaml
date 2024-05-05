@@ -2,12 +2,12 @@ logger:
   level: info
 
 server:
-  host: localhost
-  port: 8080
+  host: calendar-test
+  port: 8090
 
 grpcserver:
-  host: localhost
-  port: 8081
+  host: calendar-test
+  port: 8091
 
 db:
   type: sql
@@ -18,3 +18,4 @@ db:
     password: postgres
     host: postgres
     port: 5432
+

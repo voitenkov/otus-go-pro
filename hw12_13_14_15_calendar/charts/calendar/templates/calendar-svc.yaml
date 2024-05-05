@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: calendar-http
+   labels:
+     app: calendar-http
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.calendar.http.port }}
+      nodePort: {{ .Values.calendar.http.nodePort }}
+      protocol: TCP
+      targetPort: {{ .Values.calendar.http.port }}
+  selector:
+    app: calendar
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: calendar-grpc
+   labels:
+     app: calendar-grpc
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.calendar.grpc.port }}
+      nodePort: {{ .Values.calendar.grpc.nodePort }}
+      protocol: TCP
+      targetPort: {{ .Values.calendar.grpc.port }}
+  selector:
+    app: calendar
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: calendar
+   labels:
+     app: calendar
+spec:
+  ports:
+    - port: {{ .Values.calendar.http.port }}
+      name: http
+      protocol: TCP
+      targetPort: {{ .Values.calendar.http.port }}
+    - port: {{ .Values.calendar.grpc.port }}
+      name: grpc
+      protocol: TCP
+      targetPort: {{ .Values.calendar.grpc.port }}
+  selector:
+    app: calendar
