@@ -58,6 +58,51 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 	return nil
 }
 
+func (s *Storage) PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUID, title, description *string,
+	startTime, finishTime *storage.EventTime, notifyBefore *int, notificationSent *bool,
+) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_ = context.WithoutCancel(ctx)
+	if _, exists := s.events[id]; !exists {
+		return errEventNotFound
+	}
+
+	newEvent := s.events[id]
+
+	if userID != nil {
+		newEvent.UserID = *userID
+	}
+
+	if title != nil {
+		newEvent.Title = *title
+	}
+
+	if description != nil {
+		newEvent.Description = *description
+	}
+
+	if startTime != nil {
+		newEvent.StartTime = *startTime
+	}
+
+	if finishTime != nil {
+		newEvent.FinishTime = *finishTime
+	}
+
+	if notifyBefore != nil {
+		newEvent.NotifyBefore = *notifyBefore
+	}
+
+	if notificationSent != nil {
+		newEvent.NotificationSent = *notificationSent
+	}
+
+	s.events[id] = newEvent
+	return nil
+}
+
 func (s *Storage) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -114,6 +159,17 @@ func (s *Storage) ListEventsByPeriod(ctx context.Context, userID uuid.UUID, star
 	}
 
 	return result, nil
+}
+
+func (s *Storage) SelectEventsToNotify(ctx context.Context) ([]storage.Event, error) {
+	_ = context.WithoutCancel(ctx)
+	return []storage.Event{}, nil
+}
+
+func (s *Storage) PurgeEvents(ctx context.Context, purgeIntervalDays int) (purgedEvents int64, err error) {
+	_ = context.WithoutCancel(ctx)
+	_ = purgeIntervalDays
+	return 0, nil
 }
 
 func New() *Storage {

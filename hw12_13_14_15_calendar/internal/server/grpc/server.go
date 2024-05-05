@@ -37,7 +37,7 @@ type Application interface {
 	ListEventsByWeek(ctx context.Context, userID uuid.UUID, date storage.EventDate) ([]storage.Event, error)
 	ListEventsByMonth(ctx context.Context, userID uuid.UUID, date storage.EventDate) ([]storage.Event, error)
 	UpdateEvent(ctx context.Context, ID, userID uuid.UUID, title, description string, startTime,
-		finishTime storage.EventTime, notifyBefore int) error
+		finishTime storage.EventTime, notifyBefore int, notificationSent bool) error
 	DeleteEvent(ctx context.Context, ID uuid.UUID) error
 }
 
@@ -153,7 +153,7 @@ func (s *GRPCServer) Update(ctx context.Context, event *EventWithID) (*EventResp
 	finishTime := storage.EventTime(finishTimeParsed)
 
 	err = s.app.UpdateEvent(ctx, id, userID, event.GetEvent().Title, event.GetEvent().Description, startTime,
-		finishTime, int(event.GetEvent().NotifyBefore))
+		finishTime, int(event.GetEvent().NotifyBefore), false)
 	if err != nil {
 		return &EventResponse{
 			Result: 0,

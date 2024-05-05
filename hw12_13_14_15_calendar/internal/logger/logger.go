@@ -30,6 +30,10 @@ func (l Logger) Info(msg ...interface{}) {
 	logrus.Info(msg...)
 }
 
+func (l Logger) Infof(format string, args ...interface{}) {
+	logrus.Infof(format, args...)
+}
+
 func (l Logger) Error(msg ...interface{}) {
 	logrus.Error(msg...)
 }

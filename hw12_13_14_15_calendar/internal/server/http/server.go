@@ -29,6 +29,7 @@ type Server struct {
 type Logger interface {
 	Error(msg ...interface{})
 	Info(msg ...interface{})
+	Infof(format string, args ...interface{})
 	Warn(msg ...interface{})
 	Debug(msg ...interface{})
 	LogHTTPRequest(request *http.Request, duration time.Duration, statusCode int)
@@ -41,7 +42,7 @@ type Application interface {
 	ListEventsByWeek(ctx context.Context, userID uuid.UUID, date storage.EventDate) ([]storage.Event, error)
 	ListEventsByMonth(ctx context.Context, userID uuid.UUID, date storage.EventDate) ([]storage.Event, error)
 	UpdateEvent(ctx context.Context, ID, userID uuid.UUID, title, description string, startTime,
-		finishTime storage.EventTime, notifyBefore int) error
+		finishTime storage.EventTime, notifyBefore int, notificationSent bool) error
 	DeleteEvent(ctx context.Context, ID uuid.UUID) error
 }
 
@@ -51,6 +52,24 @@ type EventRequest struct {
 	StartTime    storage.EventTime `json:"startTime"`
 	FinishTime   storage.EventTime `json:"finishTime"`
 	NotifyBefore int               `json:"notifyBefore"`
+}
+
+func (er EventRequest) MarshalJSON() ([]byte, error) {
+	var tmp struct {
+		Title        string
+		Description  string
+		StartTime    string
+		FinishTime   string
+		NotifyBefore int
+	}
+
+	tmp.Title = er.Title
+	tmp.Description = er.Description
+	tmp.StartTime = time.Time(er.StartTime).Format(time.DateTime)
+	tmp.FinishTime = time.Time(er.FinishTime).Format(time.DateTime)
+	tmp.NotifyBefore = er.NotifyBefore
+	json, err := json.Marshal(tmp)
+	return json, err
 }
 
 func (er *EventRequest) UnmarshalJSON(data []byte) (err error) {
@@ -213,7 +232,7 @@ func (s *Server) updateEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.app.UpdateEvent(r.Context(), id, userID, data.Title, data.Description, data.StartTime,
-		data.FinishTime, data.NotifyBefore)
+		data.FinishTime, data.NotifyBefore, false)
 	if err != nil {
 		s.writeResponse(http.StatusInternalServerError, err.Error(), w)
 		s.logger.Error(err)
