@@ -20,7 +20,13 @@ type Storage interface {
 	ListEventsByPeriod(ctx context.Context, userID uuid.UUID, startDate,
 		finishDate storage.EventDate) ([]storage.Event, error)
 	UpdateEvent(ctx context.Context, event storage.Event) error
+	PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUID, title, description *string, startTime,
+		finishTime *storage.EventTime, notifyBefore *int, notificationSent *bool) error
 	DeleteEvent(ctx context.Context, ID uuid.UUID) error
+	SelectEventsToNotify(ctx context.Context) ([]storage.Event, error)
+	PurgeEvents(ctx context.Context, purgeIntervalDays int) (purgedEvents int64, err error)
+	Connect() error
+	Close() error
 }
 
 func (a *App) CreateEvent(ctx context.Context, userID uuid.UUID, title, description string, startTime,
@@ -31,7 +37,7 @@ func (a *App) CreateEvent(ctx context.Context, userID uuid.UUID, title, descript
 		return err
 	}
 
-	event := buildEvent(id, userID, title, description, startTime, finishTime, notifyBefore)
+	event := buildEvent(id, userID, title, description, startTime, finishTime, notifyBefore, false)
 	return a.storage.CreateEvent(ctx, *event)
 }
 
@@ -52,14 +58,28 @@ func (a *App) ListEventsByMonth(ctx context.Context, userID uuid.UUID,
 }
 
 func (a *App) UpdateEvent(ctx context.Context, id, userID uuid.UUID, title, description string, startTime,
-	finishTime storage.EventTime, notifyBefore int,
+	finishTime storage.EventTime, notifyBefore int, notificationSent bool,
 ) error {
-	event := buildEvent(id, userID, title, description, startTime, finishTime, notifyBefore)
+	event := buildEvent(id, userID, title, description, startTime, finishTime, notifyBefore, notificationSent)
 	return a.storage.UpdateEvent(ctx, *event)
+}
+
+func (a *App) PatchEvent(ctx context.Context, id uuid.UUID, userID *uuid.UUID, title, description *string, startTime,
+	finishTime *storage.EventTime, notifyBefore *int, notificationSent *bool,
+) error {
+	return a.storage.PatchEvent(ctx, id, userID, title, description, startTime, finishTime, notifyBefore, notificationSent)
 }
 
 func (a *App) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 	return a.storage.DeleteEvent(ctx, id)
+}
+
+func (a *App) SelectEventsToNotify(ctx context.Context) ([]storage.Event, error) {
+	return a.storage.SelectEventsToNotify(ctx)
+}
+
+func (a *App) PurgeEvents(ctx context.Context, purgeIntervalDays int) (purgedEvents int64, err error) {
+	return a.storage.PurgeEvents(ctx, purgeIntervalDays)
 }
 
 func New(storage Storage) *App {
@@ -69,16 +89,17 @@ func New(storage Storage) *App {
 }
 
 func buildEvent(id, userID uuid.UUID, title, description string, startTime, finishTime storage.EventTime,
-	notifyBefore int,
+	notifyBefore int, notificationSent bool,
 ) *storage.Event {
 	event := &storage.Event{
-		ID:           id,
-		UserID:       userID,
-		Title:        title,
-		Description:  description,
-		StartTime:    startTime,
-		FinishTime:   finishTime,
-		NotifyBefore: notifyBefore,
+		ID:               id,
+		UserID:           userID,
+		Title:            title,
+		Description:      description,
+		StartTime:        startTime,
+		FinishTime:       finishTime,
+		NotifyBefore:     notifyBefore,
+		NotificationSent: notificationSent,
 	}
 	return event
 }

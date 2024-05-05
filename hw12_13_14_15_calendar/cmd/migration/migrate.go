@@ -36,6 +36,10 @@ func main() {
 
 	sqlConf := cfg.DB.SQL
 
+	if sqlConf.Driver != "pgx" {
+		log.Fatal("unsupported db driver is selected, pgx (postgresql) driver to be used")
+	}
+
 	dsn := initstorage.GetDsn(sqlConf)
 	db, err := sql.Open(sqlConf.Driver, dsn)
 	if err != nil {

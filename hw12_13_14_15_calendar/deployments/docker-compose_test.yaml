@@ -1,0 +1,110 @@
+version: "3.8"
+
+services:
+  postgres-test:
+    image: postgres:14.4
+    container_name: postgres-test
+    hostname: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: "calendar"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - pgdata-test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - calendar-test
+
+  rabbitmq-test:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-test
+    hostname: rabbitmq
+    restart: always
+    volumes:
+      - rmqdata-test:/var/lib/rabbitmq/
+      - rmqlog-test:/var/log/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - calendar-test
+
+  migration-test:
+    build:
+      context: ../
+      dockerfile: build/migration/Dockerfile
+    container_name: migration-test
+    hostname: migration
+    restart: on-failure
+    depends_on:
+      - postgres-test
+    networks:
+      - calendar-test
+
+  scheduler-test:
+    build:
+      context: ../
+      dockerfile: build/scheduler/Dockerfile
+    container_name: scheduler-test
+    hostname: scheduler
+    restart: always
+    depends_on:
+      - postgres-test
+      - rabbitmq-test
+    networks:
+      - calendar-test
+
+  sender-test:
+    build:
+      context: ../
+      dockerfile: build/sender/Dockerfile
+    container_name: sender-test
+    hostname: sender
+    restart: always
+    depends_on:
+      - postgres-test
+      - rabbitmq-test
+    networks:
+      - calendar-test
+
+  calendar-test:
+    build:
+      context: ../
+      dockerfile: build/calendar_test/Dockerfile
+    container_name: calendar-test
+    hostname: calendar-test
+    restart: always
+    depends_on:
+      - migration-test
+      - postgres-test
+    networks:
+      - calendar-test
+
+  run-test:
+    build:
+      context: ../
+      dockerfile: build/run-test/Dockerfile
+    depends_on:
+      - migration-test
+      - postgres-test
+      - calendar-test
+      - scheduler-test 
+      - sender-test     
+    networks:
+      - calendar-test
+
+volumes:
+  pgdata-test:
+  rmqdata-test:
+  rmqlog-test:
+
+networks:
+  calendar-test:
