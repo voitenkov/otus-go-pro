@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
+        ports:
+          - name: http
+            protocol: TCP
+            containerPort: 15672
+          - name: amqp
+            protocol: TCP
+            containerPort: 5672
+        livenessProbe:
+          exec:
+            command: ["rabbitmqctl", "status"]
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 10
+        readinessProbe:
+          exec:
+            command: ["rabbitmqctl", "status"]
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
+        volumeMounts:
+        - name: rmqdata
+          mountPath: /var/lib/rabbitmq
+        - name: rmqlog
+          mountPath: /var/log/rabbitmq
+      volumes:
+      - name: rmqdata
+        persistentVolumeClaim:
+          claimName:  rmqdata-pvc
+      - name: rmqlog
+        persistentVolumeClaim:
+          claimName:  rmqlog-pvc          

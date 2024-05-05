@@ -1,1 +1,102 @@
-version: "3"
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14.4
+    container_name: postgres
+    hostname: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: "calendar"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - calendar
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: always
+    volumes:
+      - rmqdata:/var/lib/rabbitmq/
+      - rmqlog:/var/log/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - calendar
+
+  migration:
+    build:
+      context: ../
+      dockerfile: build/migration/Dockerfile
+    container_name: migration
+    hostname: migration
+    restart: on-failure
+    depends_on:
+      - postgres
+    networks:
+      - calendar
+
+  calendar:
+    build:
+      context: ../
+      dockerfile: build/calendar/Dockerfile
+    container_name: calendar
+    hostname: calendar
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - migration
+      - postgres
+    networks:
+      - calendar
+
+  scheduler:
+    build:
+      context: ../
+      dockerfile: build/scheduler/Dockerfile
+    container_name: scheduler
+    hostname: scheduler
+    restart: always
+    depends_on:
+      - migration
+      - postgres
+      - rabbitmq
+    networks:
+      - calendar
+
+  sender:
+    build:
+      context: ../
+      dockerfile: build/sender/Dockerfile
+    container_name: sender
+    hostname: sender
+    restart: always
+    depends_on:
+      - migration    
+      - postgres
+      - rabbitmq
+    networks:
+      - calendar
+
+volumes:
+  pgdata:
+  rmqdata:
+  rmqlog:
+
+networks:
+  calendar:

@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar
+  labels:
+    app: calendar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar
+  template:
+    metadata:
+      labels:
+        app: calendar
+    spec:
+      initContainers:
+      - name: migration
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+      containers:
+      - name: calendar
+        image: "{{ .Values.calendar.image.repository }}:{{ .Values.calendar.image.tag }}"
+        ports:
+        - name: http
+          containerPort: {{ .Values.calendar.http.port }}
+        - name: grpc
+          containerPort: {{ .Values.calendar.grpc.port }}

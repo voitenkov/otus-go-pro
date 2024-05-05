@@ -1,0 +1,21 @@
+logger:
+  level: info
+
+db:
+  type: sql
+  sql:
+    driver: pgx
+    name: calendar
+    user: postgres
+    password: postgres
+    host: postgres
+    port: 5432
+
+queue:
+  type: rmq
+  rmq:
+    name: notifications
+    user: guest
+    password: guest
+    host: rabbitmq
+    port: 5672
